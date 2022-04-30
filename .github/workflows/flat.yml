@@ -22,6 +22,7 @@ jobs:
       - name: Fetch data
         uses: githubocto/flat@v3
         with:
-          http_url: https://api.filplus.d.interplanetary.one/api/getVerifiers?limit=10&page=1
+          http_url: https://api.filplus.d.interplanetary.one/public/api/getVerifiers
+          axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-data.json
           postprocess: ./postprocessing/parse-interplanetaryone-data.ts
