@@ -19,10 +19,15 @@ jobs:
           deno-version: v1.10.x
       - name: Check out repo
         uses: actions/checkout@v2
-      - name: Fetch data
+      - name: Fetch data (InterPlanetary One - Verifiers)
         uses: githubocto/flat@v3
         with:
           http_url: https://api.filplus.d.interplanetary.one/public/api/getVerifiers
           axios_config: axios_config.json
-          downloaded_filename: ./data/raw/interplanetaryone-data.json
+          downloaded_filename: ./data/raw/interplanetaryone-verifiers.json
           postprocess: ./postprocessing/parse-interplanetaryone-data.ts
+      - name: Fetch data (FilPlus Dev - Issues)
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://filplus.dev/api/issues
+          downloaded_filename: ./data/raw/filplus-issues.json
