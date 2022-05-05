@@ -16,7 +16,7 @@ jobs:
       - name: Setup deno
         uses: denoland/setup-deno@main
         with:
-          deno-version: v1.10.x
+          deno-version: v1.x
       - name: Check out repo
         uses: actions/checkout@v2
       - name: Fetch data (InterPlanetary One - Verifiers)
@@ -31,3 +31,5 @@ jobs:
         with:
           http_url: https://filplus.dev/api/issues
           downloaded_filename: ./data/raw/filplus-issues.json
+      - name: Fetch data (filecoin-project/notary-governance - Issues)
+        run: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}; deno run -A --unstable --no-check ./postprocessing/fetch-notary-governance-issues.ts
