@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - .github/workflows/flat.yml
-      - ./postprocessing/parse-interplanetaryone-data.ts
+      - ./postprocessing
   workflow_dispatch: {} # Required even though this is currently empty
   schedule:
     - cron: '0 0 1 * *' # Run this workflow every month on the first day of the month
@@ -32,4 +32,7 @@ jobs:
           http_url: https://filplus.dev/api/issues
           downloaded_filename: ./data/raw/filplus-issues.json
       - name: Fetch data (filecoin-project/notary-governance - Issues)
-        run: GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}; deno run -A --unstable --no-check ./postprocessing/fetch-notary-governance-issues.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FILES: toJSON('[{"name":"data/raw/notary-governance-issues.json","deltaBytes":0,"source":"htfilecoin-project/notary-governancees"}]')
+        run: deno run -A --unstable --no-check ./postprocessing/fetch-notary-governance-issues.ts
