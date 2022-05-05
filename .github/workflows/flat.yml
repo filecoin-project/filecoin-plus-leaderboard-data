@@ -39,4 +39,5 @@ jobs:
           postprocess: ./postprocessing/fetch-notary-governance-issues.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DENO_FUTURE_CHECK: 1
         # run: deno run -A --unstable --no-check ./postprocessing/fetch-notary-governance-issues.ts
