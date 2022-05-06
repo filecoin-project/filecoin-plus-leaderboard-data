@@ -1,12 +1,19 @@
-import { writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
+import { readJSON, writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
 import _ from "https://esm.sh/lodash?no-check";
 
-import notaryGovernanceIssues from "../data/processed/notary-governance-issues.json" assert {
-  type: "json",
-};
-import verifiersFromInterplanetaryOne from "../data/raw/interplanetaryone-verifiers.json" assert {
-  type: "json",
-};
+// import notaryGovernanceIssues from "../data/processed/notary-governance-issues.json" assert {
+//   type: "json",
+// };
+// import verifiersFromInterplanetaryOne from "../data/raw/interplanetaryone-verifiers.json" assert {
+//   type: "json",
+// };
+
+const notaryGovernanceIssues = await readJSON(
+  "./data/processed/notary-governance-issues.json",
+);
+const verifiersFromInterplanetaryOne = await readJSON(
+  "./data/raw/interplanetaryone-verifiers.json",
+);
 
 const verifiers = Object.create({});
 verifiers.fromIssues = notaryGovernanceIssues;

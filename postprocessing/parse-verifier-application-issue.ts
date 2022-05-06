@@ -1,5 +1,5 @@
 import _ from "https://esm.sh/lodash?no-check";
-import { writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
+import { readJSON, writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
 import { render } from "https://deno.land/x/gfm/mod.ts";
 import {
   isAddressId,
@@ -10,9 +10,13 @@ import {
 } from "../utils/general.ts";
 import * as regexes from "../utils/regexes.ts";
 
-import notaryGovernanceIssues from "../data/raw/notary-governance-issues.json" assert {
-  type: "json",
-};
+// import notaryGovernanceIssues from "../data/raw/notary-governance-issues.json" assert {
+//   type: "json",
+// };
+
+const notaryGovernanceIssues = await readJSON(
+  "./data/raw/notary-governance-issues.json",
+);
 
 export const parseVerifierApplicationFromIssue = (
   issue: any = undefined,
