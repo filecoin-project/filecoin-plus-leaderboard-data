@@ -112,3 +112,8 @@ export const getParsedVerifierIssues = () =>
       }),
     ),
   );
+
+await writeJSON(
+  "./data/processed/notary-governance-issues.json",
+  getParsedVerifierIssues(),
+);

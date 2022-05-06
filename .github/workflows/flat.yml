@@ -47,4 +47,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DENO_FUTURE_CHECK: 1
-        # run: deno run -A --unstable --no-check ./postprocessing/fetch-notary-governance-issues.ts
+      - name: Process data (filecoin-project/notary-governance - Issues)
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://empty-object.deno.dev
+          downloaded_filename: ./data/processed/notary-governance-issues.json
+          postprocess: ./postprocessing/parse-verifier-application-issue.ts
