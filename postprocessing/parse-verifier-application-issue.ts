@@ -68,7 +68,7 @@ export const parseVerifierApplicationFromIssue = (
 };
 
 export const parseVerifierApplicationFromIssues = (
-  issues: any = undefined,
+  issues: any = [],
   options?: { normalized: boolean | undefined },
 ) => {
   const data = issues?.map((v) => {
