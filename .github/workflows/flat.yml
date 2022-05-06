@@ -53,3 +53,5 @@ jobs:
           http_url: https://empty-object.deno.dev
           downloaded_filename: ./data/processed/notary-governance-issues.json
           postprocess: ./postprocessing/parse-verifier-application-issue.ts
+        env:
+          DENO_FUTURE_CHECK: 1
