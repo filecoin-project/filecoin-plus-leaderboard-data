@@ -25,7 +25,14 @@ jobs:
           http_url: https://api.filplus.d.interplanetary.one/public/api/getVerifiers
           axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-verifiers.json
-          postprocess: ./postprocessing/parse-interplanetaryone-data.ts
+          # postprocess: ./postprocessing/parse-interplanetaryone-data.ts
+      - name: Fetch data (InterPlanetary One - Verified Clients)
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://api.filplus.d.interplanetary.one/public/api/getVerifiedClients
+          axios_config: axios_config.json
+          downloaded_filename: ./data/raw/interplanetaryone-verified-clients.json
+          # postprocess: ./postprocessing/parse-interplanetaryone-data.ts
       - name: Fetch data (FilPlus Dev - Issues)
         uses: githubocto/flat@v3
         with:

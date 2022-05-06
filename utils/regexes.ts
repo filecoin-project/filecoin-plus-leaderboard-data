@@ -1,0 +1,15 @@
+export const getRegion = (v): any => /^<?.*region[^:]*:([^\n]+)<+?/im.exec(v);
+export const getAddress = (v): any => /^<?.*address[^:]*:([^\n]+)<+?/im.exec(v);
+export const getName = (v): any => /^<?.*name[^:]*:([^\n]+)<+?/im.exec(v);
+export const getOrganization = (v): any => /^<?.*organization[^:]*:([^\n]+)<+?/im.exec(v);
+export const getWebsiteAndSocial = (v): any => /^<?.*website.{0,3}social[^:]*:([^\n]+)<+?/im.exec(v);
+export const getApprovedAddress = (v): any => /approved.*[\r\n]*.*address.*[\r\n]*.*\s+(f[0-9]+[^\r]+)/im.exec(v);
+export const regionIsAfrica = (v): any => /^\s*(Africa)\s*$/im.test(v);
+export const regionIsAsiaNotGreaterChina = (v): any => /^\s*(Asia.minus.GCN)\s*$/im.test(v);
+export const regionIsEurope = (v): any => /^\s*(Europe|EU)\s*$/im.test(v);
+export const regionIsGreaterChina = (v): any => /^\s*(Asia.GCN|GCN.Asia|China|Greater.China)\s*$/im.test(v);
+export const regionIsNorthAmerica = (v): any => /^\s*(n\/a|North.America|NA)\s*$/im.test(v);
+export const regionIsOceania = (v): any => /^\s*(Oceania)\s*$/im.test(v);
+export const regionIsSouthAmerica = (v): any => /^\s*(South.America)\s*$/im.test(v);
+export const regionIsGlobal = (v): any => /^\s*(Global)\s*$/im.test(v);
+export const regionIsOther = (v): any => /^\s*(Other)\s*$/im.test(v);

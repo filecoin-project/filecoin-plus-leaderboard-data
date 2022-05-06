@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "strict": false
+    "strict": false,
+    "target": "esnext",
+    "esModuleInterop": true,
+    "module": "esnext",
+    "jsx": "react",
+    "noImplicitAny": false,
+    "experimentalDecorators": true
   }
 }
