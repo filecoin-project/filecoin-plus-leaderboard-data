@@ -44,10 +44,14 @@ export const parseVerifierApplicationFromIssue = (
       );
   }
   address = newAddress || (address && address[1]);
-  address = trimAndClean(address);
+  const tempCleanAddress = (address) => {
+    const addr = /^f[^\s]+/im.exec(address);
+    return addr?.[0] || address;
+  };
+  address = tempCleanAddress(trimAndClean(address));
 
-  const addressId = isAddressId(address) && address; // || (isAddressKey(address) && (await getAddressIdFromKey(address)));
-  const addressKey = isAddressKey(address) && address; // || (isAddressId(address) && (await getAddressKeyFromId(address)));
+  const addressId = isAddressId(address) && address.toLowerCase(); // || (isAddressKey(address) && (await getAddressIdFromKey(address)));
+  const addressKey = isAddressKey(address) && address.toLowerCase(); // || (isAddressId(address) && (await getAddressKeyFromId(address)));
   const name = regexes.getName(bodyParsed) &&
     trimAndClean(regexes.getName(bodyParsed)[1]);
   // if (issue.number === 460) console.log('bodyParsed(460) ->', bodyParsed);
