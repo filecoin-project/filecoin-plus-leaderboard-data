@@ -63,3 +63,11 @@ jobs:
           postprocess: ./postprocessing/generate-address-mapping.ts
         env:
           DENO_FUTURE_CHECK: 1
+      - name: Generate data (Verifiers)
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://empty-object.deno.dev
+          downloaded_filename: ./data/generated/verifiers.json
+          postprocess: ./postprocessing/generate-verifiers-data.ts
+        env:
+          DENO_FUTURE_CHECK: 1
