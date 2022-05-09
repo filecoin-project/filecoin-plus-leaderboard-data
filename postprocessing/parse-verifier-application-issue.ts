@@ -1,6 +1,7 @@
+// deno-lint-ignore-file no-unused-vars no-explicit-any
 import _ from "https://esm.sh/lodash?no-check";
 import { readJSON, writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
-import { render } from "https://deno.land/x/gfm/mod.ts";
+import { render } from "https://deno.land/x/gfm@0.1.20/mod.ts";
 import {
   isAddressId,
   isAddressKey,
@@ -93,25 +94,34 @@ const removeInvalidApplications = (applications: any) =>
   );
 
 const removeDuplicates = (applications: any) => {
-  let data;
-  data = _.orderBy(applications, ["issueNumber"], ["desc"]);
-  data = _.uniqBy(
-    applications,
-    "addressId",
-  );
+  let data = applications;
+  data = _.orderBy(data, ["issueNumber"], ["desc"]);
+  data = (!!data.addressId && _.uniqBy(data, "addressId") ||
+    !!data.addressKey && _.uniqBy(data, "addressKey")) || data;
   return data;
 };
 
 // console.log(notaryGovernanceIssues);
 
-export const getParsedVerifierIssues = () =>
-  removeDuplicates(
-    removeInvalidApplications(
-      parseVerifierApplicationFromIssues(notaryGovernanceIssues, {
-        normalized: true,
-      }),
-    ),
-  );
+export const getParsedVerifierIssues = () => {
+  let data;
+  data = parseVerifierApplicationFromIssues(notaryGovernanceIssues, {
+    normalized: true,
+  });
+  data = removeInvalidApplications(data);
+  data = removeDuplicates(data);
+  // console.log("data ->", data);
+
+  return data;
+
+  // removeDuplicates(
+  //   removeInvalidApplications(
+  //     parseVerifierApplicationFromIssues(notaryGovernanceIssues, {
+  //       normalized: true,
+  //     }),
+  //   ),
+  // );
+};
 
 await writeJSON(
   "./data/processed/notary-governance-issues.json",
