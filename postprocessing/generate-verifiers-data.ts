@@ -207,5 +207,6 @@ verifiers.toOutput = _.orderBy(verifiers.toOutput, [
 ], [
   "asc",
 ]);
+verifiers.toOutput = _.uniqBy(verifiers.toOutput, "addressId");
 
 await writeJSON("./data/generated/verifiers.json", verifiers.toOutput);
