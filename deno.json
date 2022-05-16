@@ -10,5 +10,13 @@
     "experimentalDecorators": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false
+  },
+  "fmt": {
+    "options": {
+      "indentWidth": 2,
+      "lineWidth": 120,
+      "singleQuote": true,
+      "useTabs": false
+    }
   }
 }
