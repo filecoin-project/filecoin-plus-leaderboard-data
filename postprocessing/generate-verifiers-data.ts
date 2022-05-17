@@ -1,7 +1,10 @@
 // deno-lint-ignore-file no-unused-vars no-explicit-any
-import { readJSON, writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
-import _ from "https://esm.sh/lodash?no-check";
-import moment from "https://esm.sh/moment";
+import { readJSON, writeJSON } from 'https://deno.land/x/flat@0.0.15/mod.ts';
+import _ from 'https://esm.sh/lodash?no-check';
+import moment from 'https://esm.sh/moment';
+
+import { Verifier } from '../typings/Verifier.ts';
+import { convertHeightToDate, orderByKey } from '../utils/general.ts';
 // import * as util from "https://deno.land/std@0.138.0/node/util.ts";
 
 // util.inspect.defaultOptions = {
@@ -22,16 +25,16 @@ import moment from "https://esm.sh/moment";
 // };
 
 const notaryGovernanceIssues = await readJSON(
-  "./data/processed/notary-governance-issues.json",
+  './data/processed/notary-governance-issues.json',
 );
 const verifiersFromInterplanetaryOne = await readJSON(
-  "./data/raw/interplanetaryone-verifiers.json",
+  './data/raw/interplanetaryone-verifiers.json',
 );
 const verifiedClientsFromInterplanetaryOne = await readJSON(
-  "./data/raw/interplanetaryone-verified-clients.json",
+  './data/raw/interplanetaryone-verified-clients.json',
 );
 const addressMap = await readJSON(
-  "./data/generated/address-mapping.json",
+  './data/generated/address-mapping.json',
 );
 
 const withResolvedAddresses = (verifiers) => {
@@ -64,27 +67,33 @@ const withResolvedAddresses = (verifiers) => {
   });
 };
 
-const verifiers = Object.create({});
+type Verifiers = {
+  fromIssues?: any;
+  fromInterplanetaryOne?: any;
+  filtered?: any;
+  toOutput: Verifier[];
+  toOutputOrdered?: Verifier[];
+};
+
+const verifiers: Verifiers = Object.create({});
 verifiers.fromIssues = notaryGovernanceIssues;
 verifiers.fromInterplanetaryOne = verifiersFromInterplanetaryOne.data;
 verifiers.fromIssues = withResolvedAddresses(verifiers.fromIssues);
 
 const verifiedClients = Object.create({});
-verifiedClients.fromInterplanetaryOne =
-  verifiedClientsFromInterplanetaryOne.data;
+verifiedClients.fromInterplanetaryOne = verifiedClientsFromInterplanetaryOne.data;
 
 // Can only be used for verifiers enriched with InterPlanetary One data.
 const orderVerifiers = (verifiers) =>
   _.orderBy(verifiers, [
-    (v) => _.get(v, "fromInterplanetaryOne.verifiedClientsCount"),
-    (v) => _.get(v, "fromInterplanetaryOne.initialAllowance"),
+    (v) => _.get(v, 'fromInterplanetaryOne.verifiedClientsCount'),
+    (v) => _.get(v, 'fromInterplanetaryOne.initialAllowance'),
   ], [
-    "desc",
-    "desc",
+    'desc',
+    'desc',
   ]);
 
-const getIssueNumberFromAuditTrail = (auditTrail) =>
-  /([0-9]+)$/im.exec(auditTrail)?.[1] || [];
+const getIssueNumberFromAuditTrail = (auditTrail) => /([0-9]+)$/im.exec(auditTrail)?.[1] || [];
 
 // Filter verifiers having the same issue number registered on the InterPlanetary One API.
 const filterExistsInInterplanetaryOne = (
@@ -142,8 +151,7 @@ verifiers.toOutput = enrichWithVerifiedClients(
 );
 
 const enrichWithTtdData = (verifiers: any[]) => {
-  const humanizeDate = (seconds: any) =>
-    moment.duration(seconds, "seconds").humanize();
+  const humanizeDate = (seconds: any) => moment.duration(seconds, 'seconds').humanize();
   const calculateTtd = (verifiedClients) =>
     verifiedClients?.map((
       vc,
@@ -153,9 +161,7 @@ const enrichWithTtdData = (verifiers: any[]) => {
       return { averageTtd: null, averageTtdRaw: null };
     }
 
-    const ttdSum = ttdData.reduce((previous: any, current: any) =>
-      previous + current
-    );
+    const ttdSum = ttdData.reduce((previous: any, current: any) => previous + current);
     const ttdSumInSeconds = Number(Number(ttdSum / ttdData.length).toFixed());
     const ttdSumInDuration = humanizeDate(ttdSumInSeconds);
 
@@ -203,10 +209,40 @@ const enrichWithTtdData = (verifiers: any[]) => {
 
 verifiers.toOutput = enrichWithTtdData(verifiers.toOutput);
 verifiers.toOutput = _.orderBy(verifiers.toOutput, [
-  (v) => _.get(v, "ttdAverages.averageTtdRaw"),
+  (v) => _.get(v, 'ttdAverages.averageTtdRaw'),
 ], [
-  "asc",
+  'asc',
 ]);
-verifiers.toOutput = _.uniqBy(verifiers.toOutput, "addressId");
+verifiers.toOutput = _.uniqBy(verifiers.toOutput, 'addressId');
 
-await writeJSON("./data/generated/verifiers.json", verifiers.toOutput);
+// TODO(alexxnica): Find a better way of organizing filters.
+// Additional filters
+verifiers.toOutput = verifiers.toOutput
+  .filter((verifier) => !!verifier.name)
+  .filter((verifier) => verifier.name != 'n/a')
+  .filter((verifier) => !/Testing[^a-zA-Z]*Deleted/i.test(verifier.name));
+
+// TODO(alexxnica): organize, refine, and refactor this.
+verifiers.toOutput = verifiers.toOutput.map((verifier) => {
+  const { fromInterplanetaryOne } = verifier;
+  return {
+    ...verifier,
+    createdAt: verifier.createdAt ||
+      convertHeightToDate(fromInterplanetaryOne.createdAtHeight),
+    status: (!!fromInterplanetaryOne.removed && 'REMOVED') || 'ACTIVE',
+    hasDatacap: {
+      total: BigInt(fromInterplanetaryOne.initialAllowance).toString(),
+      allocated: BigInt(fromInterplanetaryOne.allowance).toString(),
+      available: BigInt(BigInt(fromInterplanetaryOne.initialAllowance) - BigInt(fromInterplanetaryOne.allowance))
+        .toString(),
+    },
+    hasStats: {
+      timeToDatacap: verifier.ttdAverages,
+    },
+    clientsCount: fromInterplanetaryOne.verifiedClientsCount,
+  };
+});
+
+verifiers.toOutputOrdered = orderByKey(verifiers.toOutput);
+
+await writeJSON('./data/generated/verifiers.json', verifiers.toOutputOrdered);
