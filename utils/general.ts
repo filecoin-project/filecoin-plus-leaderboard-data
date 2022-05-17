@@ -66,3 +66,14 @@ export const convertHeightToDate = (filHeight: number) =>
   new Date(
     convertHeightToUnix(filHeight) * 1000,
   ).toISOString();
+
+export const orderByKey = (items) =>
+  items.map((item) =>
+    Object.keys(item).sort().reduce(
+      (obj, key) => {
+        obj[key] = item[key];
+        return obj;
+      },
+      {},
+    )
+  );
