@@ -240,6 +240,8 @@ verifiers.toOutput = verifiers.toOutput.map((verifier) => {
       timeToDatacap: verifier.ttdAverages,
     },
     clientsCount: fromInterplanetaryOne.verifiedClientsCount,
+    issueUrl: _.isNumber(verifier.issueNumber) &&
+        `https://github.com/filecoin-project/notary-governance/issues/${verifier.issueNumber}` || null,
   };
 });
 
