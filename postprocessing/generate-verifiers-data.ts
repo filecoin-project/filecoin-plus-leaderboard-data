@@ -232,9 +232,9 @@ verifiers.toOutput = verifiers.toOutput.map((verifier) => {
     status: (!!fromInterplanetaryOne.removed && 'REMOVED') || 'ACTIVE',
     hasDatacap: {
       total: BigInt(fromInterplanetaryOne.initialAllowance).toString(),
-      allocated: BigInt(fromInterplanetaryOne.allowance).toString(),
-      available: BigInt(BigInt(fromInterplanetaryOne.initialAllowance) - BigInt(fromInterplanetaryOne.allowance))
+      allocated: BigInt(BigInt(fromInterplanetaryOne.initialAllowance) - BigInt(fromInterplanetaryOne.allowance))
         .toString(),
+      available: BigInt(fromInterplanetaryOne.allowance).toString(),
     },
     hasStats: {
       timeToDatacap: verifier.ttdAverages,
