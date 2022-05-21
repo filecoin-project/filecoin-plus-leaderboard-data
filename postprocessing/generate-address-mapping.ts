@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-unused-vars no-explicit-any
 import { readJSON, writeJSON } from 'https://deno.land/x/flat@0.0.15/mod.ts';
 import PQueue from 'https://cdn.skypack.dev/p-queue?dts';
+import { isValidAddress } from '../utils/regexes.ts';
 
 const queue = new PQueue({ concurrency: 4, interval: 500 });
 
@@ -61,7 +62,7 @@ const getInitialAddresses = (
   });
 };
 
-const resolveAddressesWithGlif = async (addressMap: AddressMap[]) => {
+const resolveAddressesWithGlif = async (addressMap: AddressMap[]): Promise<AddressMap[]> => {
   const newAddressMap: AddressMap[] = [];
   const apiEndpoint = 'https://api.node.glif.io/rpc/v0';
 
@@ -142,7 +143,12 @@ verifiers.resolvedAddresses = await resolveAddressesWithGlif(
 
 // console.log("verifiers.resolvedAddresses ->", verifiers.resolvedAddresses);
 
-await writeJSON(
+// Remove invalid addresses
+verifiers.resolvedAddresses = verifiers.resolvedAddresses.filter(({ addressId, addressKey }) =>
+  isValidAddress(addressId) && isValidAddress(addressKey)
+);
+
+verifiers.resolvedAddresses = await writeJSON(
   './data/generated/address-mapping.json',
   verifiers.resolvedAddresses,
 );
