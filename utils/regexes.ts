@@ -13,3 +13,4 @@ export const regionIsOceania = (v) => /^\s*(Oceania)\s*$/im.test(v);
 export const regionIsSouthAmerica = (v) => /^\s*(South.America)\s*$/im.test(v);
 export const regionIsGlobal = (v) => /^\s*(Global)\s*$/im.test(v);
 export const regionIsOther = (v) => /^\s*(Other)\s*$/im.test(v);
+export const isValidAddress = (v) => /^f[a-zA-Z0-9]+$/im.test(v);
