@@ -15,7 +15,7 @@ type AddressMap = {
 };
 
 const addressMap: AddressMap[] = [];
-console.log('addressMap ->', addressMap);
+// console.log('addressMap ->', addressMap);
 
 const testAddressMap: AddressMap[] = [
   { addressId: '', addressKey: '' },
@@ -70,7 +70,7 @@ const resolveAddressesWithGlif = async (addressMap: AddressMap[]) => {
 
     addressId = addresses.addressId;
     addressKey = addresses.addressKey;
-    console.log(addresses);
+    // console.log(addresses);
 
     if (!addressId && !!addressKey) {
       const getAddress = await queue.add(async () =>
