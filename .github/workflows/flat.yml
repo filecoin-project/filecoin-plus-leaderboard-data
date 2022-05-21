@@ -3,8 +3,8 @@ name: Flat
 on:
   push:
     paths:
-      - .github/workflows/flat.yml
-      - ./postprocessing/**.ts
+      - '.github/workflows/flat.yml'
+      - 'postprocessing/**.ts'
   workflow_dispatch: {} # Required even though this is currently empty
   schedule:
     - cron: "0 0 1 * *" # Run this workflow every month on the first day of the month
