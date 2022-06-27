@@ -36,12 +36,22 @@ export interface Verifier {
     total?: string;
     allocated?: string;
     available?: string;
+    usedInDeals?: string;
   };
   hasStats?: {
     timeToDatacap: TtdAverages;
   };
   clientsCount?: number;
+  roles: Role[];
 }
+
+export interface Role {
+  name: RoleType;
+  startedAt: string;
+  status: Status;
+}
+
+export type RoleType = 'VERIFIER' | 'ROOT_KEY_HOLDER' | 'CLIENT' | 'STORAGE_PROVIDER';
 
 export interface FromInterplanetaryOne {
   id?: number;
