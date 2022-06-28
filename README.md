@@ -21,7 +21,6 @@ Directory path | Description
 [/data/raw](/data/raw) | Raw datasets as fetched from source.
 [/data/processed](/data/processed) | Datasets that've been processed by scripts in [/postprocessing](/postprocessing).
 [/data/generated](/data/generated) | New datasets generated for data integration by scripts in [/postprocessing](/postprocessing).
-[/data/transformed](/data/transformed) | Not utilized for now.
 [/postprocessing](/postprocessing) | This is the home for all processing scripts.
 [/typings](/typings) | This is work-in-progress and is expected to hold TypeScript definitions for the data we maintain.
 [/utils](/utils) | Holds utility scripts used by processing scripts.
