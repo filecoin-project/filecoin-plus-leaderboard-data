@@ -10,7 +10,7 @@ We're using GitHub workflows to handle data pipelines by leveraging GitHub's [Fl
 
 Processing tasks and their outputs are separate from data fetched from the source, making the dataset lifecycle easier to understand while maintaining explainability, so stakeholders can safely and efficiently use the data and audit when necessary.
 
-## Repository structure & contents
+## Repository structure
 
 The repository has the following structure:
 
@@ -24,6 +24,17 @@ Directory path | Description
 [/postprocessing](/postprocessing) | This is the home for all processing scripts.
 [/typings](/typings) | This is work-in-progress and is expected to hold TypeScript definitions for the data we maintain.
 [/utils](/utils) | Holds utility scripts used by processing scripts.
+
+## Data contents
+
+File path | Description
+--------- | -----------
+[/data/generated/verifiers.json](/data/generated/verifiers.json) | Data of all Verifiers/Notaries pulled from multiple sources, processed, and combined.
+[/data/generated/address-mapping.json](/data/generated/address-mapping.json) | Address mapping of on-chain addresses (Filecoin Address ID <-> Filecoin Address Key). Addresses are only added to this file if they exist on-chain (both address types are validated through [Glif's APIs](https://api.node.glif.io/)).
+[/data/processed/notary-governance-issues.json](/data/processed/notary-governance-issues.json) | Data extracted from the notary-governance issues and gone through filtering, cleansing, and normalization.
+[/data/raw/interplanetaryone-verifiers.json](/data/raw/interplanetaryone-verifiers.json) | Raw data fetched from the `getVerifiers` endpoint of InterPlanetary One's API.
+[/data/raw/interplanetaryone-verified-clients.json](/data/raw/interplanetaryone-verified-clients.json) | Raw data fetched from the `getVerifiedClients` endpoint of InterPlanetary One's API.
+[/data/raw/notary-governance-issues.json](/data/raw/notary-governance-issues.json) | Raw data fetched from an endpoint running a script to get all issues from the [notary-governance repository](https://github.com/filecoin-project/notary-governance).
 
 ## Recommended reading
 
