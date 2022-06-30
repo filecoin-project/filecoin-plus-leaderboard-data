@@ -15,6 +15,7 @@ export interface Verifier {
   fromInterplanetaryOne?: FromInterplanetaryOne;
   verifiedClientsFromInterplanetaryOne?: VerifiedClientsFromInterplanetaryOne[];
   ttdAverages?: TtdAverages;
+  ldnTtdAverages?: TtdAverages;
   id?: string;
   githubUsername?: string;
   githubAvatarUrl?: string;
@@ -40,6 +41,7 @@ export interface Verifier {
   };
   hasStats?: {
     timeToDatacap: TtdAverages;
+    ldnTimeToDatacap: TtdAverages;
   };
   clientsCount?: number;
   roles: Role[];

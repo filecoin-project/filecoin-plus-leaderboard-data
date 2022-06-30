@@ -203,11 +203,65 @@ const enrichWithTtdData = (verifiers: any[]) => {
   });
 };
 
+// TODO: refactor this into a reusable module.
+const enrichWithLdnTtdData = (verifiers: any[]) => {
+  const humanizeDate = (seconds: any) => moment.duration(seconds, 'seconds').humanize();
+  const calculateTtdAverages = (ttdData) => {
+    if (_.isEmpty(ttdData)) {
+      return { averageTtd: null, averageTtdRaw: null };
+    }
+
+    const ttdSum = ttdData.reduce((previous: any, current: any) => previous + current);
+    const ttdSumInSeconds = Number(Number(ttdSum / ttdData.length).toFixed());
+    const ttdSumInDuration = humanizeDate(ttdSumInSeconds);
+
+    return {
+      averageTtd: ttdSumInDuration,
+      averageTtdRaw: ttdSumInSeconds,
+    };
+  };
+
+  const allAllowances = verifiers.flatMap((t) =>
+    t.verifiedClientsFromInterplanetaryOne?.flatMap((v) => v.allowanceArray)
+  ).filter((v) => !!v);
+  // console.log('allAllowances.slice ->', allAllowances.slice(0, 1));
+  // console.log('allAllowances.length ->', allAllowances.length);
+
+  const allowancesGroupedByVerifier = _.groupBy(
+    allAllowances,
+    _.property('verifierAddressId'),
+  );
+  // console.log('allowancesGroupedByVerifier | length ->', Object.entries(allowancesGroupedByVerifier).length);
+
+  return verifiers.map((verifier) => {
+    if (_.isEmpty(verifier.verifiedClientsFromInterplanetaryOne)) {
+      return { ldnAverageTtd: null, ldnAverageTtdRaw: null };
+    }
+
+    const ttdData = _.get(allowancesGroupedByVerifier, verifier.addressId).filter((allowance) =>
+      !!allowance.isLdnAllowance && allowance.allowanceTTD !== null
+    ).map((v) => v.allowanceTTD);
+    // console.log('verifier.addressId ->', verifier.addressId);
+    // console.log('ttdData ->', ttdData);
+    // console.log('ttdData.length ->', ttdData.length);
+
+    const ldnTtdDataAverages = calculateTtdAverages(ttdData);
+
+    // console.log('ldnTtdDataAverages ->', ldnTtdDataAverages);
+
+    return {
+      ...verifier,
+      ldnTtdAverages: ldnTtdDataAverages,
+    };
+  });
+};
+
 // const enrichedWithTtd = enrichWithTtdData(verifiers.toOutput.slice(0, 2));
 // console.dir(enrichedWithTtd, { depth: Infinity });
 // console.log(verifiers.toOutput);
 
 verifiers.toOutput = enrichWithTtdData(verifiers.toOutput);
+verifiers.toOutput = enrichWithLdnTtdData(verifiers.toOutput);
 verifiers.toOutput = _.orderBy(verifiers.toOutput, [
   (v) => _.get(v, 'ttdAverages.averageTtdRaw'),
 ], [
@@ -238,6 +292,7 @@ verifiers.toOutput = verifiers.toOutput.map((verifier) => {
     },
     hasStats: {
       timeToDatacap: verifier.ttdAverages,
+      ldnTimeToDatacap: verifier.ldnTtdAverages,
     },
     clientsCount: fromInterplanetaryOne.verifiedClientsCount,
     issueUrl: _.isNumber(verifier.issueNumber) &&
@@ -245,6 +300,8 @@ verifiers.toOutput = verifiers.toOutput.map((verifier) => {
   };
 });
 
+// Remove all multisigs from the output (because they're all (presumably) LDNs and not verifiers)
+verifiers.toOutput = verifiers.toOutput.filter((v) => !v.fromInterplanetaryOne.isMultisig);
 verifiers.toOutputOrdered = orderByKey(verifiers.toOutput);
 
 await writeJSON('./data/generated/verifiers.json', verifiers.toOutputOrdered);
