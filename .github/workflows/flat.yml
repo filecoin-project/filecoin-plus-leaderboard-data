@@ -31,6 +31,12 @@ jobs:
           http_url: https://api.filplus.d.interplanetary.one/public/api/getVerifiedClients
           axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-verified-clients.json
+      - name: Fetch data (InterPlanetary One - Verified Clients)
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://api.filplus.d.interplanetary.one/api/getAllowances
+          axios_config: axios_config.json
+          downloaded_filename: ./data/raw/interplanetaryone-allowances.json
       - name: Fetch data (filecoin-project/notary-governance - Issues)
         uses: githubocto/flat@v3
         with:
