@@ -33,6 +33,9 @@ const verifiersFromInterplanetaryOne = await readJSON(
 const verifiedClientsFromInterplanetaryOne = await readJSON(
   './data/raw/interplanetaryone-verified-clients.json',
 );
+const allowancesFromIpo = await readJSON(
+  './data/raw/interplanetaryone-allowances.json',
+);
 const addressMap = await readJSON(
   './data/generated/address-mapping.json',
 );
@@ -221,26 +224,23 @@ const enrichWithLdnTtdData = (verifiers: any[]) => {
     };
   };
 
-  const allAllowances = verifiers.flatMap((t) =>
-    t.verifiedClientsFromInterplanetaryOne?.flatMap((v) => v.allowanceArray)
-  ).filter((v) => !!v);
-  // console.log('allAllowances.slice ->', allAllowances.slice(0, 1));
-  // console.log('allAllowances.length ->', allAllowances.length);
+  const allAllowanceSignatures = allowancesFromIpo.data.flatMap((v) => v.signers)?.filter((v) => !!v.operationTTD)
+    ?.filter((v) => !!v);
+  // console.log('allAllowanceSignatures.slice ->', allAllowanceSignatures.slice(0, 1));
+  // console.log('allAllowanceSignatures.length ->', allAllowanceSignatures.length);
 
   const allowancesGroupedByVerifier = _.groupBy(
-    allAllowances,
-    _.property('verifierAddressId'),
+    allAllowanceSignatures,
+    _.property('addressId'),
   );
   // console.log('allowancesGroupedByVerifier | length ->', Object.entries(allowancesGroupedByVerifier).length);
 
   return verifiers.map((verifier) => {
-    if (_.isEmpty(verifier.verifiedClientsFromInterplanetaryOne)) {
+    const ttdData = _.get(allowancesGroupedByVerifier, verifier.addressId)?.map((v) => v.operationTTD);
+
+    if (_.isEmpty(ttdData)) {
       return { ldnAverageTtd: null, ldnAverageTtdRaw: null };
     }
-
-    const ttdData = _.get(allowancesGroupedByVerifier, verifier.addressId).filter((allowance) =>
-      !!allowance.isLdnAllowance && allowance.allowanceTTD !== null
-    ).map((v) => v.allowanceTTD);
     // console.log('verifier.addressId ->', verifier.addressId);
     // console.log('ttdData ->', ttdData);
     // console.log('ttdData.length ->', ttdData.length);
