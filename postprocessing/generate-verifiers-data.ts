@@ -238,9 +238,6 @@ const enrichWithLdnTtdData = (verifiers: any[]) => {
   return verifiers.map((verifier) => {
     const ttdData = _.get(allowancesGroupedByVerifier, verifier.addressId)?.map((v) => v.operationTTD);
 
-    if (_.isEmpty(ttdData)) {
-      return { ldnAverageTtd: null, ldnAverageTtdRaw: null };
-    }
     // console.log('verifier.addressId ->', verifier.addressId);
     // console.log('ttdData ->', ttdData);
     // console.log('ttdData.length ->', ttdData.length);
