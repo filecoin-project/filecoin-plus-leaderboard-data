@@ -22,19 +22,19 @@ jobs:
       - name: Fetch data (InterPlanetary One - Verifiers)
         uses: githubocto/flat@v3
         with:
-          http_url: https://api.filplus.d.interplanetary.one/public/api/getVerifiers
+          http_url: https://api.datacapstats.io/public/api/getVerifiers
           axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-verifiers.json
       - name: Fetch data (InterPlanetary One - Verified Clients)
         uses: githubocto/flat@v3
         with:
-          http_url: https://api.filplus.d.interplanetary.one/public/api/getVerifiedClients
+          http_url: https://api.datacapstats.io/public/api/getVerifiedClients
           axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-verified-clients.json
       - name: Fetch data (InterPlanetary One - LDN Allowances)
         uses: githubocto/flat@v3
         with:
-          http_url: https://api.filplus.d.interplanetary.one/api/getLdnAllowances
+          http_url: https://api.datacapstats.io/api/getLdnAllowances?limit
           axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-allowances.json
       - name: Fetch data (filecoin-project/notary-governance - Issues)
