@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-unused-vars no-explicit-any
-import _ from "https://esm.sh/lodash?no-check";
+import _ from "https://esm.sh/lodash@4.17.21?no-check";
 import { readJSON, writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
 import { render } from "https://deno.land/x/gfm@0.1.20/mod.ts";
 import {
