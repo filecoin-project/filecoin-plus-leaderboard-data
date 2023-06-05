@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-unused-vars no-explicit-any
+// deno-lint-ignore-file
 import _ from "https://esm.sh/lodash@4.17.21?no-check";
 import { readJSON, writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
 import { render } from "https://deno.land/x/gfm@0.1.20/mod.ts";
@@ -10,10 +10,6 @@ import {
   trimAndClean,
 } from "../utils/general.ts";
 import * as regexes from "../utils/regexes.ts";
-
-// import notaryGovernanceIssues from "../data/raw/notary-governance-issues.json" assert {
-//   type: "json",
-// };
 
 const notaryGovernanceIssues = await readJSON(
   "./data/raw/notary-governance-issues.json",
@@ -29,7 +25,7 @@ export const parseVerifierApplicationFromIssue = (
     trimAndClean(regexes.getRegion(bodyParsed)[1]);
 
   // If address is not present in the issue body, we look for it in the comments
-  let address = regexes.getAddress(bodyParsed);
+  let address = regexes.getAddress(bodyParsed) as unknown as string;
   let newAddress;
   if ((!address || !address[1]) && Array.isArray(issue.comments)) {
     const { comments } = issue;
@@ -50,8 +46,8 @@ export const parseVerifierApplicationFromIssue = (
   };
   address = tempCleanAddress(trimAndClean(address));
 
-  const addressId = isAddressId(address) && address.toLowerCase(); // || (isAddressKey(address) && (await getAddressIdFromKey(address)));
-  const addressKey = isAddressKey(address) && address.toLowerCase(); // || (isAddressId(address) && (await getAddressKeyFromId(address)));
+  const addressId = isAddressId(address) && address.toLowerCase();
+  const addressKey = isAddressKey(address) && address.toLowerCase();
   const name = regexes.getName(bodyParsed) &&
     trimAndClean(regexes.getName(bodyParsed)[1]);
   // if (issue.number === 460) console.log('bodyParsed(460) ->', bodyParsed);
@@ -65,14 +61,12 @@ export const parseVerifierApplicationFromIssue = (
     issueNumber: issue.number,
     addressId: addressId || null,
     addressKey: addressKey || null,
-    // address,
     name,
     organization,
     region,
     websiteAndSocial,
   };
 
-  // console.log();
   return (!!options?.normalized && normalizeVerifier(data)) || data;
 };
 
@@ -81,14 +75,11 @@ export const parseVerifierApplicationFromIssues = (
   options?: { normalized: boolean | undefined },
 ) => {
   const data = issues?.map((v) => {
-    // console.log(v);
-    // return {...parseVerifierApplicationFromIssue(v)};
     const data = parseVerifierApplicationFromIssue(v);
     return data;
   }).filter((v) => !!v);
-  // console.log(returnThis);
+
   return (!!options?.normalized && normalizeVerifiers(data)) || data;
-  // return data.map((v) => v.status === 'fulfilled' && v.value);
 };
 
 // Applications are considered invalid if having more than 3 fields empty.
@@ -105,8 +96,6 @@ const removeDuplicates = (applications: any) => {
   return data;
 };
 
-// console.log(notaryGovernanceIssues);
-
 export const getParsedVerifierIssues = () => {
   let data;
   data = parseVerifierApplicationFromIssues(notaryGovernanceIssues, {
@@ -114,17 +103,8 @@ export const getParsedVerifierIssues = () => {
   });
   data = removeInvalidApplications(data);
   data = removeDuplicates(data);
-  // console.log("data ->", data);
 
   return data;
-
-  // removeDuplicates(
-  //   removeInvalidApplications(
-  //     parseVerifierApplicationFromIssues(notaryGovernanceIssues, {
-  //       normalized: true,
-  //     }),
-  //   ),
-  // );
 };
 
 await writeJSON(

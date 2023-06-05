@@ -5,18 +5,12 @@ import { isValidAddress } from '../utils/regexes.ts';
 
 const queue = new PQueue({ concurrency: 4, interval: 500 });
 
-// let count = 0;
-// queue.on('active', () => {
-//   console.log(`Working on item #${++count}.  Size: ${queue.size}  Pending: ${queue.pending}`);
-// });
-
 type AddressMap = {
   addressId: string;
   addressKey: string;
 };
 
 const addressMap: AddressMap[] = [];
-// console.log('addressMap ->', addressMap);
 
 const testAddressMap: AddressMap[] = [
   { addressId: '', addressKey: '' },
@@ -71,7 +65,6 @@ const resolveAddressesWithGlif = async (addressMap: AddressMap[]): Promise<Addre
 
     addressId = addresses.addressId;
     addressKey = addresses.addressKey;
-    // console.log(addresses);
 
     if (!addressId && !!addressKey) {
       const getAddress = await queue.add(async () =>
@@ -89,10 +82,7 @@ const resolveAddressesWithGlif = async (addressMap: AddressMap[]): Promise<Addre
         })
       );
       const getAddressData = await getAddress.json();
-      // console.log('getAddressData ->', getAddressData);
-      // console.log("addresses ->", addresses);
       addressId = getAddressData?.result;
-      // console.log("Getting addressId ->", addressId);
     }
 
     if (!addressKey && !!addressId) {
@@ -111,13 +101,8 @@ const resolveAddressesWithGlif = async (addressMap: AddressMap[]): Promise<Addre
         })
       );
       const getAddressData = await getAddress.json();
-      // console.log("addresses ->", addresses);
       addressKey = getAddressData?.result;
-      // console.log("Getting addressKey ->", addressKey);
     }
-
-    // console.log({ addressId: addressId || null, addressKey: addressKey || null });
-    // console.log();
 
     newAddressMap.push({ addressId: addressId || null, addressKey: addressKey || null });
   });
@@ -133,15 +118,9 @@ verifiers.resolvedAddresses = getInitialAddresses(
   verifiers.fromIssues,
   verifiers.fromInterplanetaryOne,
 );
-// verifiers.resolvedAddresses = testAddressMap;
 verifiers.resolvedAddresses = await resolveAddressesWithGlif(
   verifiers.resolvedAddresses,
 );
-// console.log('verifiers.resolvedAddresses ->', verifiers.resolvedAddresses);
-
-// const buildAddressMap = (resolvedAddresses) => {};
-
-// console.log("verifiers.resolvedAddresses ->", verifiers.resolvedAddresses);
 
 // Remove invalid addresses
 verifiers.resolvedAddresses = verifiers.resolvedAddresses.filter(({ addressId, addressKey }) =>

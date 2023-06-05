@@ -5,24 +5,6 @@ import moment from 'https://esm.sh/moment@2.29.4';
 
 import { Verifier } from '../typings/Verifier.ts';
 import { convertHeightToDate, orderByKey } from '../utils/general.ts';
-// import * as util from "https://deno.land/std@0.138.0/node/util.ts";
-
-// util.inspect.defaultOptions = {
-//   ...util.inspect.defaultOptions,
-//   colors: true,
-//   depth: 12,
-//   maxArrayLength: null,
-//   showHidden: true,
-//   breakLength: Infinity,
-//   // breakLength: 2,
-// };
-
-// import notaryGovernanceIssues from "../data/processed/notary-governance-issues.json" assert {
-//   type: "json",
-// };
-// import verifiersFromInterplanetaryOne from "../data/raw/interplanetaryone-verifiers.json" assert {
-//   type: "json",
-// };
 
 const notaryGovernanceIssues = await readJSON(
   './data/processed/notary-governance-issues.json',
@@ -41,7 +23,6 @@ const addressMap = await readJSON(
 );
 
 const withResolvedAddresses = (verifiers) => {
-  // console.log("addressMap ->", addressMap);
   return verifiers.map((verifier) => {
     let addressId, addressKey;
 
@@ -49,17 +30,13 @@ const withResolvedAddresses = (verifiers) => {
     addressKey = verifier.addressKey;
 
     if (!addressId && !!addressKey) {
-      // console.log("Missing addressId");
       addressId = addressMap.find((v) => v.addressKey === addressKey)
         ?.addressId;
-      // console.log("new addressId ->", addressId);
     }
 
     if (!addressKey && !!addressId) {
-      // console.log("Missing addressKey");
       addressKey = addressMap.find((v) => v.addressId === addressId)
         ?.addressKey;
-      // console.log("new addressKey ->", addressKey);
     }
 
     return {
@@ -173,7 +150,6 @@ const enrichWithTtdData = (verifiers: any[]) => {
       averageTtdRaw: ttdSumInSeconds,
     };
   };
-  // console.log('verifiers ->', verifiers);
 
   const filterVerifiedClients = (verifiedClients, verifierAddressId?) =>
     verifiedClients?.filter((verifiedClient) =>
@@ -194,10 +170,6 @@ const enrichWithTtdData = (verifiers: any[]) => {
       ),
     );
     const ttdDataAverages = calculateTtdAverages(ttdData);
-
-    // console.log('verifiedClientsFiltered ->', verifiedClientsFiltered);
-    // console.log("ttdData ->", ttdData);
-    // console.log("ttdDataAverages ->", ttdDataAverages);
 
     return {
       ...verifier,
@@ -226,25 +198,15 @@ const enrichWithLdnTtdData = (verifiers: any[]) => {
 
   const allAllowanceSignatures = allowancesFromIpo.data.flatMap((v) => v.signers)?.filter((v) => !!v.operationTTD)
     ?.filter((v) => !!v);
-  // console.log('allAllowanceSignatures.slice ->', allAllowanceSignatures.slice(0, 1));
-  // console.log('allAllowanceSignatures.length ->', allAllowanceSignatures.length);
 
   const allowancesGroupedByVerifier = _.groupBy(
     allAllowanceSignatures,
     _.property('addressId'),
   );
-  // console.log('allowancesGroupedByVerifier | length ->', Object.entries(allowancesGroupedByVerifier).length);
 
   return verifiers.map((verifier) => {
     const ttdData = _.get(allowancesGroupedByVerifier, verifier.addressId)?.map((v) => v.operationTTD);
-
-    // console.log('verifier.addressId ->', verifier.addressId);
-    // console.log('ttdData ->', ttdData);
-    // console.log('ttdData.length ->', ttdData.length);
-
     const ldnTtdDataAverages = calculateTtdAverages(ttdData);
-
-    // console.log('ldnTtdDataAverages ->', ldnTtdDataAverages);
 
     return {
       ...verifier,
@@ -252,10 +214,6 @@ const enrichWithLdnTtdData = (verifiers: any[]) => {
     };
   });
 };
-
-// const enrichedWithTtd = enrichWithTtdData(verifiers.toOutput.slice(0, 2));
-// console.dir(enrichedWithTtd, { depth: Infinity });
-// console.log(verifiers.toOutput);
 
 verifiers.toOutput = enrichWithTtdData(verifiers.toOutput);
 verifiers.toOutput = enrichWithLdnTtdData(verifiers.toOutput);
