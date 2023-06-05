@@ -1,4 +1,4 @@
-import _ from 'https://esm.sh/lodash?no-check';
+import _ from "https://esm.sh/lodash@4.17.21?no-check";
 import * as regexes from './regexes.ts';
 export const trimAndClean = (string: string) =>
   string
