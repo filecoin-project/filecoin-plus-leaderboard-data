@@ -1,22 +1,17 @@
 {
-  "compilerOptions": {
-    "allowJs": true,
-    "strict": false,
-    "target": "esnext",
-    "esModuleInterop": true,
-    "module": "esnext",
-    "jsx": "react",
-    "noImplicitAny": false,
-    "experimentalDecorators": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false
+  "imports": {
+    "p-queue": "npm:p-queue@^8.1.0",
+    "@x/flat": "https://deno.land/x/flat@0.0.15/mod.ts",
+    "lodash": "https://esm.sh/lodash@4.17.21?no-check",
+    "moment": "https://esm.sh/moment@2.29.4",
+    "gfm": "https://deno.land/x/gfm@0.1.20/mod.ts",
+    "octokit": "https://esm.sh/octokit@2.0.14",
+    "graphql-schema": "https://esm.sh/@octokit/graphql-schema@13.4.0"
   },
   "fmt": {
-    "options": {
       "indentWidth": 2,
       "lineWidth": 120,
       "singleQuote": true,
       "useTabs": false
-    }
   }
 }

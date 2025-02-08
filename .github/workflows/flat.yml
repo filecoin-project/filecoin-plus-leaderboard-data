@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup deno
-        uses: denoland/setup-deno@v1
+        uses: denoland/setup-deno@v2
         with:
-          deno-version: v1.30.x
+          deno-version: v2.x
       - name: Check out repo
         uses: actions/checkout@v3
       - name: Fetch data (InterPlanetary One - Verifiers)

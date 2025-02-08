@@ -1,4 +1,4 @@
-import { writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
+import { writeJSON } from "@x/flat";
 import { getAllIssues } from "../utils/github.ts";
 
 const data = await getAllIssues();

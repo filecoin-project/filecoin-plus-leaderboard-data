@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-unused-vars no-explicit-any
-import { readJSON, writeJSON } from 'https://deno.land/x/flat@0.0.15/mod.ts';
-import PQueue from 'https://cdn.skypack.dev/p-queue?dts';
+import { readJSON, writeJSON } from '@x/flat';
+import PQueue from 'p-queue';
 import { isValidAddress } from '../utils/regexes.ts';
 
 const queue = new PQueue({ concurrency: 4, interval: 500 });

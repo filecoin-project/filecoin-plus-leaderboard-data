@@ -1,11 +1,11 @@
 // deno-lint-ignore-file
-import { Octokit } from "https://esm.sh/octokit@2.0.14";
+import { Octokit } from "octokit";
 import {
   IssueComment,
   IssueCommentConnection,
   IssueConnection,
   PullRequestConnection,
-} from "https://esm.sh/@octokit/graphql-schema@13.4.0";
+} from "graphql-schema";
 
 const GITHUB_API_TOKEN = Deno.env.get("GITHUB_TOKEN");
 const octokit = new Octokit({ auth: GITHUB_API_TOKEN });
