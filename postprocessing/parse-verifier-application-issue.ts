@@ -1,6 +1,6 @@
 // deno-lint-ignore-file
 import _ from "lodash";
-import { readJSON, writeJSON } from "@x/flat";
+import { readJSON, writeJSON } from "../utils/general.ts";
 import { render } from "gfm";
 import {
   isAddressId,

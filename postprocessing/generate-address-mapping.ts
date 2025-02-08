@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-unused-vars no-explicit-any
-import { readJSON, writeJSON } from '@x/flat';
+import { readJSON, writeJSON } from '../utils/general.ts';
 import PQueue from 'p-queue';
 import { isValidAddress } from '../utils/regexes.ts';
 

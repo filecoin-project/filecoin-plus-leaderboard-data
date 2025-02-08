@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-unused-vars no-explicit-any
-import { readJSON, writeJSON } from "@x/flat";
+import { readJSON, writeJSON } from '../utils/general.ts';
 import _ from 'lodash';
-import moment from "moment";
+import moment from 'moment';
 
 import { Verifier } from '../typings/Verifier.ts';
 import { convertHeightToDate, orderByKey } from '../utils/general.ts';
