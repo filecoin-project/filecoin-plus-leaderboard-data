@@ -1,7 +1,7 @@
 // deno-lint-ignore-file
-import _ from "https://esm.sh/lodash@4.17.21?no-check";
-import { readJSON, writeJSON } from "https://deno.land/x/flat@0.0.15/mod.ts";
-import { render } from "https://deno.land/x/gfm@0.1.20/mod.ts";
+import _ from "lodash";
+import { readJSON, writeJSON } from "../utils/general.ts";
+import { render } from "gfm";
 import {
   isAddressId,
   isAddressKey,

@@ -1,4 +1,4 @@
-import _ from "https://esm.sh/lodash@4.17.21?no-check";
+import _ from "lodash";
 import * as regexes from './regexes.ts';
 export const trimAndClean = (string: string) =>
   string
@@ -77,3 +77,14 @@ export const orderByKey = (items) =>
       {},
     )
   );
+
+  // From https://github.com/githubocto/flat-postprocessing/blob/127af8ca8e748925402a44e6d55f6365ca29d0d2/src/json.ts
+  export async function readJSON(path: string) {
+    const text = await Deno.readTextFile(path)
+    return JSON.parse(text)
+  }
+
+  // From https://github.com/githubocto/flat-postprocessing/blob/127af8ca8e748925402a44e6d55f6365ca29d0d2/src/json.ts
+  export async function writeJSON(path: string, ...args: Parameters<typeof JSON.stringify>) {
+    await Deno.writeTextFile(path, JSON.stringify(...args))
+  }

@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-unused-vars no-explicit-any
-import { readJSON, writeJSON } from 'https://deno.land/x/flat@0.0.15/mod.ts';
-import _ from 'https://esm.sh/lodash@4.17.21?no-check';
-import moment from 'https://esm.sh/moment@2.29.4';
+import { readJSON, writeJSON } from '../utils/general.ts';
+import _ from 'lodash';
+import moment from 'moment';
 
 import { Verifier } from '../typings/Verifier.ts';
 import { convertHeightToDate, orderByKey } from '../utils/general.ts';
