@@ -1,6 +1,7 @@
-import _ from "lodash";
+import _ from 'lodash';
 import * as regexes from './regexes.ts';
-export const trimAndClean = (string: string) =>
+
+export const sanitizeString = (string: string) =>
   string
     ?.trim()
     ?.replace(/<\/?[^>]*>/gi, '')
@@ -20,7 +21,7 @@ export const normalizeVerifier = (verifier: {}) => {
     'GLOBAL',
     'OTHER',
   ];
-  const normalizeRegion = (region) => {
+  const normalizeRegion = (region: string) => {
     const regionList = [];
     if (regexes.regionIsAfrica(region)) regionList.push('AFRICA');
     if (regexes.regionIsAsiaNotGreaterChina(region)) {
@@ -67,24 +68,24 @@ export const convertHeightToDate = (filHeight: number) =>
     convertHeightToUnix(filHeight) * 1000,
   ).toISOString();
 
-export const orderByKey = (items) =>
+export const orderByKey = (items: any[]) =>
   items.map((item) =>
     Object.keys(item).sort().reduce(
-      (obj, key) => {
+      (obj: Record<string, any>, key: string) => {
         obj[key] = item[key];
         return obj;
       },
-      {},
+      {} as Record<string, any>,
     )
   );
 
-  // From https://github.com/githubocto/flat-postprocessing/blob/127af8ca8e748925402a44e6d55f6365ca29d0d2/src/json.ts
-  export async function readJSON(path: string) {
-    const text = await Deno.readTextFile(path)
-    return JSON.parse(text)
-  }
+// From https://github.com/githubocto/flat-postprocessing/blob/127af8ca8e748925402a44e6d55f6365ca29d0d2/src/json.ts
+export async function readJSON(path: string) {
+  const text = await Deno.readTextFile(path);
+  return JSON.parse(text);
+}
 
-  // From https://github.com/githubocto/flat-postprocessing/blob/127af8ca8e748925402a44e6d55f6365ca29d0d2/src/json.ts
-  export async function writeJSON(path: string, ...args: Parameters<typeof JSON.stringify>) {
-    await Deno.writeTextFile(path, JSON.stringify(...args))
-  }
+// From https://github.com/githubocto/flat-postprocessing/blob/127af8ca8e748925402a44e6d55f6365ca29d0d2/src/json.ts
+export async function writeJSON(path: string, ...args: Parameters<typeof JSON.stringify>) {
+  await Deno.writeTextFile(path, JSON.stringify(...args));
+}

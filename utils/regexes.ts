@@ -1,8 +1,8 @@
 export const getRegion = (v: string) => /^<?.*region[^:]*:([^\n]+)<+?/im.exec(v);
-export const getAddress = (v: string) => /^<?.*address[^:]*:([^\n]+)<+?/im.exec(v);
-export const getName = (v: string) => /^<?.*name[^:]*:([^\n]+)<+?/im.exec(v);
-export const getOrganization = (v: string) => /^<?.*organization[^:]*:([^\n]+)<+?/im.exec(v);
-export const getWebsiteAndSocial = (v: string) => /^<?.*website.{0,3}social[^:]*:([^\n]+)<+?/im.exec(v);
+export const getAddress = (v: string): RegExpExecArray | null => /^<?.*address[^:]*:.*?(f\d[0-9A-Za-z]+)/im.exec(v);
+export const getName = (v: string) => /^<?.*name[^:]*:([^\n]{0,80})<+?/im.exec(v);
+export const getOrganization = (v: string) => /^.*?organization.{0,5}?: *(?:[\s"'\\*])*([\d\w _\-(),./]+)(?:[\s\n\r]\(<\\)*(?:[\s\n\r"'\\])*/im.exec(v);
+export const getWebsiteAndSocial = (v: string) => /^<?.*website.{0,3}social[^:]*:([^\n\r]+)<+?/im.exec(v);
 export const getApprovedAddress = (v: string) => /approved.*[\r\n]*.*address.*[\r\n]*.*\s+(f[0-9]+[^\r]+)/im.exec(v);
 export const regionIsAfrica = (v: string) => /^\s*(Africa)\s*$/im.test(v);
 export const regionIsAsiaNotGreaterChina = (v: string) => /^\s*(Asia.minus.GCN)\s*$/im.test(v);

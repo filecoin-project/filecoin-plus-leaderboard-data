@@ -44,7 +44,7 @@ export interface Verifier {
     ldnTimeToDatacap: TtdAverages;
   };
   clientsCount?: number;
-  roles: Role[];
+  roles?: Role[];
 }
 
 export interface Role {
@@ -142,10 +142,11 @@ export type Region =
   | 'AFRICA'
   | 'ASIA_NOT_GREATER_CHINA'
   | 'EUROPE'
+  | 'GLOBAL'
   | 'GREATER_CHINA'
   | 'NORTH_AMERICA'
   | 'OCEANIA'
-  | 'SOUTH_AMERICA';
+  | 'OTHER';
 
 export type Status = 'ACTIVE' | 'INACTIVE' | 'REMOVED';
 

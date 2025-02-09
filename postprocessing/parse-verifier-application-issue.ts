@@ -1,61 +1,84 @@
-// deno-lint-ignore-file
-import _ from "lodash";
-import { readJSON, writeJSON } from "../utils/general.ts";
-import { render } from "gfm";
+import _ from 'lodash';
 import {
   isAddressId,
   isAddressKey,
   normalizeVerifier,
   normalizeVerifiers,
-  trimAndClean,
-} from "../utils/general.ts";
-import * as regexes from "../utils/regexes.ts";
+  readJSON,
+  sanitizeString,
+  writeJSON,
+} from '../utils/general.ts';
+import { render } from 'gfm';
+import { getAddress, getName, getOrganization, getRegion, getWebsiteAndSocial } from '../utils/regexes.ts';
+import { GithubIssue } from '../typings/GithubIssue.ts';
 
-const notaryGovernanceIssues = await readJSON(
-  "./data/raw/notary-governance-issues.json",
+const notaryGovernanceIssues: GithubIssue[] = await readJSON(
+  './data/raw/notary-governance-issues.json',
 );
 
+// If address is not present in the issue body, we look for it in the comments
+const findAddressInComments = (issue: GithubIssue) => {
+  if (Array.isArray(issue.comments.edges) && issue.comments.edges.length > 0) {
+    let addr;
+
+    // Match the first address-like string in the comments
+    addr = issue.comments.edges.map((v) => v.node)
+      ?.flatMap((v) => v.body)
+      ?.filter((v) => /approved.*\r\n.*address/im.test(v))
+      ?.flat();
+
+    addr = /approved.*[\r\n]*.*address.*[\r\n]*.*\s+(f[0-9]+[^\r]+)/im.exec(
+      addr[0],
+    );
+
+    return addr && addr[1] ? addr[1] : undefined;
+  }
+};
+
+/**
+ * Parses a verifier application from a GitHub issue.
+ * @param issue - The GitHub issue to parse.
+ * @param options - Optional settings.
+ * @returns The parsed verifier application.
+ */
 export const parseVerifierApplicationFromIssue = (
-  issue: any = undefined,
+  issue: GithubIssue | undefined = undefined,
   options?: { normalized: boolean | undefined },
 ) => {
+  if (!issue) return;
   const bodyParsed = render(issue.body);
 
-  const region = regexes.getRegion(bodyParsed) &&
-    trimAndClean(regexes.getRegion(bodyParsed)[1]);
+  const regionMatch = getRegion(bodyParsed);
+  const region = regionMatch ? sanitizeString(regionMatch[1]) : undefined;
 
-  // If address is not present in the issue body, we look for it in the comments
-  let address = regexes.getAddress(bodyParsed) as unknown as string;
-  let newAddress;
-  if ((!address || !address[1]) && Array.isArray(issue.comments)) {
-    const { comments } = issue;
+  const addressMatch = getAddress(bodyParsed);
+  let address = addressMatch ? addressMatch[1] : undefined;
 
-    newAddress = comments
-      ?.flatMap((v: any) => v.body)
-      ?.filter((v: any) => /approved.*\r\n.*address/im.test(v))
-      ?.flat();
-    newAddress = address &&
-      /approved.*[\r\n]*.*address.*[\r\n]*.*\s+(f[0-9]+[^\r]+)/im.exec(
-        address[0],
-      );
-  }
-  address = newAddress || (address && address[1]);
-  const tempCleanAddress = (address) => {
+  address = address || findAddressInComments(issue);
+
+  /**
+   * Sanitizes an address by removing any leading or trailing whitespace and ensuring it is a valid address.
+   * @param address - The address to clean.
+   * @returns The cleaned address.
+   */
+  const sanitizeAddress = (address: string) => {
+    // Match the first address-like string in the body
     const addr = /^f[^\s]+/im.exec(address);
+
+    // If the first address-like string is not a valid address, return the original address
     return addr?.[0] || address;
   };
-  address = tempCleanAddress(trimAndClean(address));
+  address = sanitizeAddress(sanitizeString(address || '')) || '';
 
   const addressId = isAddressId(address) && address.toLowerCase();
   const addressKey = isAddressKey(address) && address.toLowerCase();
-  const name = regexes.getName(bodyParsed) &&
-    trimAndClean(regexes.getName(bodyParsed)[1]);
-  // if (issue.number === 460) console.log('bodyParsed(460) ->', bodyParsed);
-  // if (issue.number === 460) console.log('getName(bodyParsed)(460) ->', getName(bodyParsed));
-  const organization = regexes.getOrganization(bodyParsed) &&
-    trimAndClean(regexes.getOrganization(bodyParsed)[1]);
-  const websiteAndSocial = regexes.getWebsiteAndSocial(bodyParsed) &&
-    trimAndClean(regexes.getWebsiteAndSocial(bodyParsed)[1]);
+  const nameMatch = getName(bodyParsed);
+  const name = nameMatch ? sanitizeString(nameMatch[1]) : null;
+  const orgMatch = getOrganization(bodyParsed);
+  const organization = orgMatch ? sanitizeString(orgMatch[1]) : null;
+
+  const websiteAndSocialMatch = getWebsiteAndSocial(bodyParsed);
+  const websiteAndSocial = websiteAndSocialMatch ? sanitizeString(websiteAndSocialMatch[1]) : null;
 
   const data = {
     issueNumber: issue.number,
@@ -70,29 +93,38 @@ export const parseVerifierApplicationFromIssue = (
   return (!!options?.normalized && normalizeVerifier(data)) || data;
 };
 
+/**
+ * Parses verifier applications from a list of GitHub issues.
+ *
+ * @param {GithubIssue[]} issues - The list of GitHub issues to parse.
+ * @param {Object} [options] - Optional settings.
+ * @param {boolean} [options.normalized] - Whether to normalize the parsed data.
+ * @returns {Object[]} The parsed verifier applications.
+ */
 export const parseVerifierApplicationFromIssues = (
-  issues: any = [],
+  issues: GithubIssue[] = [],
   options?: { normalized: boolean | undefined },
 ) => {
-  const data = issues?.map((v) => {
-    const data = parseVerifierApplicationFromIssue(v);
-    return data;
-  }).filter((v) => !!v);
+  const data = [];
+  for (const issue of issues) {
+    const parsedData = parseVerifierApplicationFromIssue(issue);
+    if (parsedData) {
+      data.push(parsedData);
+    }
+  }
 
-  return (!!options?.normalized && normalizeVerifiers(data)) || data;
+  return options?.normalized ? normalizeVerifiers(data) : data;
 };
 
 // Applications are considered invalid if having more than 3 fields empty.
-const removeInvalidApplications = (applications: any) =>
-  applications.filter((v: {}) =>
-    Object.entries(v).filter((n) => n[1]).length > 3
-  );
+const removeInvalidApplications = (applications: any[]) =>
+  applications.filter((v) => Object.entries(v).filter((n) => n[1]).length > 3);
 
 const removeDuplicates = (applications: any) => {
   let data = applications;
-  data = _.orderBy(data, ["issueNumber"], ["desc"]);
-  data = (!!data.addressId && _.uniqBy(data, "addressId") ||
-    !!data.addressKey && _.uniqBy(data, "addressKey")) || data;
+  data = _.orderBy(data, ['issueNumber'], ['desc']);
+  data = (!!data.addressId && _.uniqBy(data, 'addressId') ||
+    !!data.addressKey && _.uniqBy(data, 'addressKey')) || data;
   return data;
 };
 
@@ -108,6 +140,6 @@ export const getParsedVerifierIssues = () => {
 };
 
 await writeJSON(
-  "./data/processed/notary-governance-issues.json",
+  './data/processed/notary-governance-issues.json',
   getParsedVerifierIssues(),
 );
