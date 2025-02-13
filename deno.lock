@@ -109,6 +109,8 @@
     "https://cdn.deno.land/mimetypes/versions/v1.0.0/raw/mod.ts": "abd1ea614b32cfa7fd50b46f6e070617696664698b8a34935dc807f3035ad408",
     "https://cdn.deno.land/mimetypes/versions/v1.0.0/raw/src/mime.ts": "7cd7590eae6127dc1abfe710900fc749e94d5c715ffe8a148e59fe20ee21a9a5",
     "https://cdn.deno.land/url_parse/versions/1.0.0/raw/mod.ts": "f27f0d045343a4aff05c7560e285aa3f42e23096bfe0211dc549345f9a5feb94",
+    "https://cdn.skypack.dev/-/lodash@v4.17.21-K6GEbP02mWFnLA45zAmi/dist=es2019,mode=imports/optimized/lodash.js": "10c4df47937ffc78548d136dd535a021df5f57182a653260d715c0690dd22978",
+    "https://cdn.skypack.dev/lodash@4.17.21?dts": "8280de0b3efd87f06ea0eb330d15b8de32c059556023b8c6524e9eb9e4844dc0",
     "https://deno.land/std@0.92.0/_util/assert.ts": "2f868145a042a11d5ad0a3c748dcf580add8a0dbc0e876eaa0026303a5488f58",
     "https://deno.land/std@0.92.0/_util/os.ts": "e282950a0eaa96760c0cf11e7463e66babd15ec9157d4c9ed49cc0925686f6a7",
     "https://deno.land/std@0.92.0/bytes/mod.ts": "1ae1ccfe98c4b979f12b015982c7444f81fcb921bea7aa215bf37d84f46e1e13",
