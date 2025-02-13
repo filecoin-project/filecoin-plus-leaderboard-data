@@ -3,31 +3,14 @@ import PQueue from 'p-queue';
 import { isValidAddress } from '../utils/regexes.ts';
 import { NotaryGovernanceIssue } from '../typings/NotaryGovernanceIssue.ts';
 import { InterplanetaryOneVerifiers, VerifierData } from '../typings/InterplanetaryOneVerifiers.ts';
-
-const queue = new PQueue({ concurrency: 4, interval: 500 });
-
-type AddressMap = {
-  addressId: string | null;
-  addressKey: string | null;
-};
-
-// TODO: remove this when write real tests
-const addressMap: AddressMap[] = [];
-const testAddressMap: AddressMap[] = [
-  { addressId: '', addressKey: '' },
-  { addressId: 'f0107408', addressKey: '' },
-  { addressId: '', addressKey: 'f1k6wwevxvp466ybil7y2scqlhtnrz5atjkkyvm4a' },
-  {
-    addressId: 'f0107408',
-    addressKey: 'f1k6wwevxvp466ybil7y2scqlhtnrz5atjkkyvm4a',
-  },
-];
+import { GENERATED_DATA_PATH, GLIF_API_ENDPOINT, PROCESSED_DATA_PATH, RAW_DATA_PATH } from '../constants.ts';
+import { AddressMap } from '../typings/Address.ts';
 
 const notaryGovernanceIssues: NotaryGovernanceIssue[] = await readJSON(
-  './data/processed/notary-governance-issues.json',
+  `${PROCESSED_DATA_PATH}/notary-governance-issues.json`,
 );
 const verifiersFromInterplanetaryOne: InterplanetaryOneVerifiers = await readJSON(
-  './data/raw/interplanetaryone-verifiers.json',
+  `${RAW_DATA_PATH}/interplanetaryone-verifiers.json`,
 );
 
 // TODO(alexxnica): change to on-chain checks or modularize to accept different lists
@@ -55,7 +38,15 @@ const getInitialAddresses = (
   });
 };
 
-const fetchAddressData = async (apiEndpoint: string, method: string, param: string) => {
+// Add a simple cache to avoid duplicate network calls.
+const addressCache = new Map<string, string>();
+
+const fetchAddressData = async (apiEndpoint: string, method: string, address: string) => {
+  // Check cache first
+  const cacheKey = `${method}-${address}`;
+  if (addressCache.has(cacheKey)) {
+    return addressCache.get(cacheKey);
+  }
   try {
     const response = await fetch(apiEndpoint, {
       method: 'POST',
@@ -66,19 +57,37 @@ const fetchAddressData = async (apiEndpoint: string, method: string, param: stri
         jsonrpc: '2.0',
         method,
         id: 1,
-        params: [param, null],
+        params: [address, null],
       }),
     });
     const data = await response.json();
-    return data?.result;
+
+    if (!data.result) {
+      console.error(`No result returned for ${method} with address ${address}`);
+      // throw new Error(`No result returned for ${method} with address ${address}`);
+    }
+
+    addressCache.set(cacheKey, data.result);
+    return data.result;
   } catch (error) {
-    console.error(`Error fetching data for ${method} with param ${param}:`, error);
+    console.error(`Error fetching data for ${method} with address ${address}:`, error);
+
     return null;
   }
 };
 
+const fetchAddressById = async (addressId: string) => {
+  return await fetchAddressData(GLIF_API_ENDPOINT, 'Filecoin.StateAccountKey', addressId);
+};
+
+const fetchAddressByKey = async (addressKey: string) => {
+  return await fetchAddressData(GLIF_API_ENDPOINT, 'Filecoin.StateLookupID', addressKey);
+};
+
 const resolveAddressesWithGlif = async (addressMap: AddressMap[]): Promise<AddressMap[]> => {
-  const apiEndpoint = 'https://api.node.glif.io/rpc/v0';
+  const queue = new PQueue({ concurrency: 4, interval: 500 });
+  // use GLIF_API_ENDPOINT from constants, not a hardcoded string
+  const apiEndpoint = GLIF_API_ENDPOINT;
 
   const promises = addressMap.map(async (addresses) => {
     let { addressId, addressKey } = addresses;
@@ -96,6 +105,7 @@ const resolveAddressesWithGlif = async (addressMap: AddressMap[]): Promise<Addre
 
   const newAddressMap = await Promise.all(promises);
   await queue.onIdle();
+
   return newAddressMap;
 };
 
@@ -119,4 +129,6 @@ verifiers.resolvedAddresses = verifiers.resolvedAddresses.filter(({ addressId, a
   addressId !== null && addressKey !== null && isValidAddress(addressId) && isValidAddress(addressKey)
 );
 
-await writeJSON('./data/generated/address-mapping.json', verifiers.resolvedAddresses);
+console.log('Resolved addresses:', verifiers.resolvedAddresses.length);
+
+await writeJSON(`${GENERATED_DATA_PATH}/address-mapping.json`, verifiers.resolvedAddresses);

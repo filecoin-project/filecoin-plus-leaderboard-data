@@ -1,5 +1,6 @@
 import { Octokit } from 'octokit';
 import { IssueComment, IssueCommentConnection, IssueConnection, PullRequestConnection } from 'graphql-schema';
+import { GITHUB_OWNER, NOTARY_GOVERNANCE_REPO } from '../constants.ts';
 
 const GITHUB_API_TOKEN = Deno.env.get('GITHUB_TOKEN');
 const octokit = new Octokit({ auth: GITHUB_API_TOKEN });
@@ -73,15 +74,19 @@ export const getAllIssues = async (options: QueryOption = {}): Promise<IssueComm
     }
   }
 `;
-  const response = await octokit.graphql<{ repository: { issues: IssueConnection } }>(QUERY, {
-    owner: 'filecoin-project',
-    repo: 'notary-governance',
-    num: 100,
-    ...options,
-  });
-
+  let response;
+  try {
+    response = await octokit.graphql<{ repository: { issues: IssueConnection } }>(QUERY, {
+      owner: GITHUB_OWNER,
+      repo: NOTARY_GOVERNANCE_REPO,
+      num: 100,
+      ...options,
+    });
+  } catch (error) {
+    console.error('Error fetching issues from GitHub:', error);
+    throw error;
+  }
   const issuesConnection = response.repository.issues;
-
   return await loopEdges<IssueComment>(issuesConnection, {
     onNext: (cursor) => getAllIssues({ ...options, after: cursor }),
   });

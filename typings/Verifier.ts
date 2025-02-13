@@ -1,19 +1,23 @@
+import {
+  InterplanetaryOneVerifiedClient,
+} from './InterplanetaryOneVerifiedClients.ts';
+
 export interface Verifier {
   /**
    * The issue number for the application on GitHub.
    */
   issueNumber?: number;
-  addressId?: string;
-  addressKey?: string;
-  name?: string;
-  organization?: string;
-  region?: Region[];
+  addressId?: string | null;
+  addressKey?: string | null;
+  name?: string | null;
+  organization?: string | null;
+  region?: Region[] | null | string; // TODO: check if this should be a string or an array of strings
   /**
    * The website or social media information.
    */
-  websiteAndSocial?: string;
+  websiteAndSocial?: string | null;
   fromInterplanetaryOne?: FromInterplanetaryOne;
-  verifiedClientsFromInterplanetaryOne?: VerifiedClientsFromInterplanetaryOne[];
+  verifiedClientsFromInterplanetaryOne?: InterplanetaryOneVerifiedClient[];
   ttdAverages?: TtdAverages;
   ldnTtdAverages?: TtdAverages;
   id?: string;
@@ -22,7 +26,7 @@ export interface Verifier {
   /**
    * The timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
    */
-  createdAt?: string;
+  createdAt?: string | number;
   /**
    * The timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
    */
@@ -34,10 +38,10 @@ export interface Verifier {
    */
   // updatedAt?: number;
   hasDatacap?: {
-    total?: string;
-    allocated?: string;
-    available?: string;
-    usedInDeals?: string;
+    total?: string | null;
+    allocated?: string | null;
+    available?: string | null;
+    usedInDeals?: string | null;
   };
   hasStats?: {
     timeToDatacap: TtdAverages;
@@ -63,12 +67,12 @@ export interface FromInterplanetaryOne {
   retries?: number;
   name?: string;
   removed?: boolean;
-  initialAllowance?: bigint;
-  allowance?: bigint;
+  initialAllowance?: bigint | string; // TODO: check if this should be string
+  allowance?: bigint | string; // TODO: check if this should be string
   inffered?: boolean;
   isMultisig?: boolean;
   createdAtHeight?: number;
-  issueCreateTimestamp?: number;
+  issueCreateTimestamp?: number | null;
   createMessageTimestamp?: number;
   verifiedClientsCount?: number;
   receivedDatacapChange?: string;
@@ -82,19 +86,19 @@ export interface FromInterplanetaryOneAllowanceArray {
   msgCID?: string;
   retries?: number;
   addressId?: string;
-  allowance?: bigint;
-  auditTrail?: string;
+  allowance?: bigint | string; // TODO: check if this should be string
+  auditTrail?: string | null;
   verifierId?: number;
-  issueCreateTimestamp?: number;
+  issueCreateTimestamp?: number | null;
   createMessageTimestamp?: number;
 }
 
 export interface TtdAverages {
-  averageTtd?: string;
+  averageTtd: string | null;
   /**
    * The average Time To DataCap (TTD) in seconds.
    */
-  averageTtdRaw?: number;
+  averageTtdRaw: number | null;
 }
 
 export interface VerifiedClientsFromInterplanetaryOne {
@@ -103,17 +107,17 @@ export interface VerifiedClientsFromInterplanetaryOne {
   address?: string;
   retries?: number;
   auditTrail?: string;
-  name?: string;
-  initialAllowance?: bigint;
-  allowance?: bigint;
+  name: string | null;
+  initialAllowance?: bigint | string;
+  allowance?: bigint | string;
   verifierAddressId?: string;
   createdAtHeight?: number;
-  issueCreateTimestamp?: number;
+  issueCreateTimestamp?: number | null;
   createMessageTimestamp?: number;
-  verifierName?: string;
-  dealCount?: number;
-  providerCount?: number;
-  topProvider?: string;
+  verifierName?: string | null;
+  dealCount?: number | null;
+  providerCount?: number | null;
+  topProvider?: string | null;
   receivedDatacapChange?: string;
   usedDatacapChange?: string;
   allowanceArray?: VerifiedClientsFromInterplanetaryOneAllowanceArray[];
@@ -123,17 +127,17 @@ export interface VerifiedClientsFromInterplanetaryOneAllowanceArray {
   id?: number;
   error?: string;
   height?: number;
-  msgCID?: string;
+  msgCID?: string | null;
   retries?: number;
   addressId?: string;
-  allowance?: bigint;
-  auditTrail?: string;
-  allowanceTTD?: null;
+  allowance?: bigint | string;
+  auditTrail?: string | null;
+  allowanceTTD?: null | number;
   usedAllowance?: string;
   isLdnAllowance?: boolean;
   verifierAddressId?: string;
   isFromAutoverifier?: boolean;
-  issueCreateTimestamp?: number;
+  issueCreateTimestamp?: number | null;
   hasRemainingAllowance?: boolean;
   createMessageTimestamp?: number;
 }

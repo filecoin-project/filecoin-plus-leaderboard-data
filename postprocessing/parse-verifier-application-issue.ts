@@ -11,9 +11,11 @@ import {
 import { render } from 'gfm';
 import { getAddress, getName, getOrganization, getRegion, getWebsiteAndSocial } from '../utils/regexes.ts';
 import { GithubIssue } from '../typings/GithubIssue.ts';
+import { PROCESSED_DATA_PATH, RAW_DATA_PATH } from '../constants.ts';
+import { NotaryGovernanceIssue } from '../typings/NotaryGovernanceIssue.ts';
 
 const notaryGovernanceIssues: GithubIssue[] = await readJSON(
-  './data/raw/notary-governance-issues.json',
+  `${RAW_DATA_PATH}/notary-governance-issues.json`,
 );
 
 // If address is not present in the issue body, we look for it in the comments
@@ -44,7 +46,7 @@ const findAddressInComments = (issue: GithubIssue) => {
 export const parseVerifierApplicationFromIssue = (
   issue: GithubIssue | undefined = undefined,
   options?: { normalized: boolean | undefined },
-) => {
+): NotaryGovernanceIssue | undefined => {
   if (!issue) return;
   const bodyParsed = render(issue.body);
 
@@ -86,11 +88,11 @@ export const parseVerifierApplicationFromIssue = (
     addressKey: addressKey || null,
     name,
     organization,
-    region,
+    region: region ?? null,
     websiteAndSocial,
   };
 
-  return (!!options?.normalized && normalizeVerifier(data)) || data;
+  return options?.normalized ? normalizeVerifier(data) : data;
 };
 
 /**
@@ -139,7 +141,11 @@ export const getParsedVerifierIssues = () => {
   return data;
 };
 
+const parsedVerifierApplications = getParsedVerifierIssues();
+
+console.log('Parsed verifier applications:', parsedVerifierApplications.length);
+
 await writeJSON(
-  './data/processed/notary-governance-issues.json',
-  getParsedVerifierIssues(),
+  `${PROCESSED_DATA_PATH}/notary-governance-issues.json`,
+  parsedVerifierApplications,
 );
