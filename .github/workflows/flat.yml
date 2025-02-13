@@ -20,30 +20,30 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v3
       - name: Fetch data (InterPlanetary One - Verifiers)
-        uses: githubocto/flat@v3.4.0
+        uses: AlexxNica/flat
         with:
           http_url: https://api.datacapstats.io/public/api/getVerifiers
           axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-verifiers.json
       - name: Fetch data (InterPlanetary One - Verified Clients)
-        uses: githubocto/flat@v3.4.0
+        uses: AlexxNica/flat
         with:
           http_url: https://api.datacapstats.io/public/api/getVerifiedClients
           axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-verified-clients.json
       - name: Fetch data (InterPlanetary One - LDN Allowances)
-        uses: githubocto/flat@v3.4.0
+        uses: AlexxNica/flat
         with:
           http_url: https://api.datacapstats.io/api/getLdnAllowances?limit
           axios_config: axios_config.json
           downloaded_filename: ./data/raw/interplanetaryone-allowances.json
       - name: Fetch data (filecoin-project/notary-governance - Issues)
-        uses: githubocto/flat@v3.4.0
+        uses: AlexxNica/flat
         with:
           http_url: https://notary-governance-issues.deno.dev
           downloaded_filename: ./data/raw/notary-governance-issues.json
       - name: Process data (filecoin-project/notary-governance - Issues)
-        uses: githubocto/flat@v3.4.0
+        uses: AlexxNica/flat
         with:
           http_url: https://empty-object.deno.dev
           downloaded_filename: ./data/processed/notary-governance-issues.json
@@ -51,7 +51,7 @@ jobs:
         env:
           DENO_FUTURE_CHECK: 1
       - name: Generate data (Address Mapping)
-        uses: githubocto/flat@v3.4.0
+        uses: AlexxNica/flat
         with:
           http_url: https://empty-object.deno.dev
           downloaded_filename: ./data/generated/address-mapping.json
@@ -59,7 +59,7 @@ jobs:
         env:
           DENO_FUTURE_CHECK: 1
       - name: Generate data (Verifiers)
-        uses: githubocto/flat@v3.4.0
+        uses: AlexxNica/flat
         with:
           http_url: https://empty-object.deno.dev
           downloaded_filename: ./data/generated/verifiers.json
