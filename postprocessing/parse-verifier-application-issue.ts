@@ -82,13 +82,13 @@ export const parseVerifierApplicationFromIssue = (
   const websiteAndSocialMatch = getWebsiteAndSocial(bodyParsed);
   const websiteAndSocial = websiteAndSocialMatch ? sanitizeString(websiteAndSocialMatch[1]) : null;
 
-  const data = {
+  const data: NotaryGovernanceIssue = {
     issueNumber: issue.number,
     addressId: addressId || null,
     addressKey: addressKey || null,
     name,
     organization,
-    region: region ?? null,
+    region: region ? region : [],
     websiteAndSocial,
   };
 
@@ -119,14 +119,15 @@ export const parseVerifierApplicationFromIssues = (
 };
 
 // Applications are considered invalid if having more than 3 fields empty.
-const removeInvalidApplications = (applications: any[]) =>
+const removeInvalidApplications = (applications: NotaryGovernanceIssue[]) =>
   applications.filter((v) => Object.entries(v).filter((n) => n[1]).length > 3);
 
-const removeDuplicates = (applications: any) => {
+const removeDuplicates = (applications: NotaryGovernanceIssue[]) => {
   let data = applications;
   data = _.orderBy(data, ['issueNumber'], ['desc']);
-  data = (!!data.addressId && _.uniqBy(data, 'addressId') ||
-    !!data.addressKey && _.uniqBy(data, 'addressKey')) || data;
+  data = (data.some(item => item.addressId) ? _.uniqBy(data, 'addressId')
+        : data.some(item => item.addressKey) ? _.uniqBy(data, 'addressKey')
+        : data);
   return data;
 };
 

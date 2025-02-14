@@ -1,46 +1,30 @@
-import {
-  InterplanetaryOneVerifiedClient,
-} from './InterplanetaryOneVerifiedClients.ts';
+import { InterplanetaryOneVerifiedClient } from './InterplanetaryOneVerifiedClients.ts';
 
 export interface Verifier {
   /**
-   * The issue number for the application on GitHub.
+   * The issue number of the verifier in the Notary Governance repo
    */
-  issueNumber?: number;
-  addressId?: string | null;
-  addressKey?: string | null;
-  name?: string | null;
-  organization?: string | null;
-  region?: Region[] | null | string; // TODO: check if this should be a string or an array of strings
-  /**
-   * The website or social media information.
-   */
-  websiteAndSocial?: string | null;
-  fromInterplanetaryOne?: FromInterplanetaryOne;
+  issueNumber: number;
+  addressId: string | null;
+  addressKey: string | null;
+  name: string | null;
+  organization: string | null;
+  region: Region[] | string | null;
+  websiteAndSocial: string | null;
+  fromInterplanetaryOne: FromInterplanetaryOne;
   verifiedClientsFromInterplanetaryOne?: InterplanetaryOneVerifiedClient[];
   ttdAverages?: TtdAverages;
   ldnTtdAverages?: TtdAverages;
   id?: string;
   githubUsername?: string;
   githubAvatarUrl?: string;
-  /**
-   * The timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
-   */
   createdAt?: string | number;
-  /**
-   * The timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
-   */
-  // startedAt?: string;
   status?: Status;
   totalApprovals?: number;
-  /**
-   * The timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
-   */
-  // updatedAt?: number;
   hasDatacap?: {
-    total?: string | null;
-    allocated?: string | null;
-    available?: string | null;
+    total: string | null;
+    allocated: string | null;
+    available: string | null;
     usedInDeals?: string | null;
   };
   hasStats?: {
@@ -67,8 +51,8 @@ export interface FromInterplanetaryOne {
   retries?: number;
   name?: string;
   removed?: boolean;
-  initialAllowance?: bigint | string; // TODO: check if this should be string
-  allowance?: bigint | string; // TODO: check if this should be string
+  initialAllowance?: string;
+  allowance?: string;
   inffered?: boolean;
   isMultisig?: boolean;
   createdAtHeight?: number;
@@ -80,66 +64,61 @@ export interface FromInterplanetaryOne {
 }
 
 export interface FromInterplanetaryOneAllowanceArray {
-  id?: number;
-  error?: string;
-  height?: number;
-  msgCID?: string;
-  retries?: number;
-  addressId?: string;
-  allowance?: bigint | string; // TODO: check if this should be string
-  auditTrail?: string | null;
-  verifierId?: number;
-  issueCreateTimestamp?: number | null;
-  createMessageTimestamp?: number;
+  id: number;
+  error: string;
+  height: number;
+  msgCID: string;
+  retries: number;
+  addressId: string;
+  allowance: string;
+  auditTrail: string | null;
+  verifierId: number;
+  issueCreateTimestamp: number | null;
+  createMessageTimestamp: number;
 }
 
 export interface TtdAverages {
   averageTtd: string | null;
-  /**
-   * The average Time To DataCap (TTD) in seconds.
-   */
   averageTtdRaw: number | null;
 }
 
 export interface VerifiedClientsFromInterplanetaryOne {
-  id?: number;
-  addressId?: string;
-  address?: string;
-  retries?: number;
-  auditTrail?: string;
+  id: number;
+  addressId: string;
+  address: string;
+  retries: number;
+  auditTrail: string;
   name: string | null;
-  initialAllowance?: bigint | string;
-  allowance?: bigint | string;
-  verifierAddressId?: string;
-  createdAtHeight?: number;
-  issueCreateTimestamp?: number | null;
-  createMessageTimestamp?: number;
-  verifierName?: string | null;
-  dealCount?: number | null;
-  providerCount?: number | null;
-  topProvider?: string | null;
-  receivedDatacapChange?: string;
-  usedDatacapChange?: string;
-  allowanceArray?: VerifiedClientsFromInterplanetaryOneAllowanceArray[];
+  initialAllowance: string;
+  allowance: string;
+  verifierAddressId: string;
+  createdAtHeight: number;
+  issueCreateTimestamp: number | null;
+  createMessageTimestamp: number;
+  verifierName: string | null;
+  dealCount: number | null;
+  providerCount: number | null;
+  topProvider: string | null;
+  receivedDatacapChange: string;
+  usedDatacapChange: string;
+  allowanceArray: VerifiedClientsFromInterplanetaryOneAllowanceArray[];
 }
 
 export interface VerifiedClientsFromInterplanetaryOneAllowanceArray {
-  id?: number;
-  error?: string;
-  height?: number;
-  msgCID?: string | null;
-  retries?: number;
-  addressId?: string;
-  allowance?: bigint | string;
-  auditTrail?: string | null;
-  allowanceTTD?: null | number;
-  usedAllowance?: string;
-  isLdnAllowance?: boolean;
-  verifierAddressId?: string;
-  isFromAutoverifier?: boolean;
-  issueCreateTimestamp?: number | null;
-  hasRemainingAllowance?: boolean;
-  createMessageTimestamp?: number;
+  id: number;
+  error: string;
+  height: number;
+  msgCID: string | null;
+  retries: number;
+  addressId: string;
+  allowance: string;
+  auditTrail: string | null;
+  allowanceTTD: number | null;
+  usedAllowance: string;
+  isLdnAllowance: boolean;
+  verifierAddressId: string;
+  isFromAutoverifier: boolean;
+  issueCreateTimestamp: number | null;
 }
 
 export type Region =

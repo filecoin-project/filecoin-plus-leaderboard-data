@@ -14,10 +14,8 @@ export const sanitizeString = (string: string): string =>
     ?.replace(/<\/?[^>]*>/gi, '')
     ?.replace(/^\[|\]$/gi, '');
 
-// TODO: create and change address length to constants
 export const isAddressKey = (address: string): boolean => address?.length >= 14 && address?.length <= 100;
 
-// TODO: create and change address length to constants
 export const isAddressId = (address: string): boolean => address?.length > 4 && address?.length <= 13;
 
 const validRegions = [
@@ -102,25 +100,27 @@ export const convertHeightToDate = (filHeight: number): string =>
  * @param items - Array of objects to order.
  * @returns Array with objects whose keys are sorted.
  */
-export const orderByKey = (items: Record<string, any>[]): Record<string, any>[] =>
-  items.map((item) => {
-    return Object.keys(item)
+export function orderByKey<T extends object>(items: T[]): T[] {
+  return items.map((item) => {
+    const ordered = {} as T;
+    Object.keys(item)
       .sort()
-      .reduce<Record<string, any>>((obj, key) => {
-        obj[key] = item[key];
-        return obj;
-      }, {});
+      .forEach((key) => {
+        ordered[key as keyof T] = item[key as keyof T];
+      });
+    return ordered;
   });
+}
 
 /**
  * Reads a JSON file and parses its content.
  * @param path - File path to read.
  * @returns Parsed JSON object.
  */
-export async function readJSON(path: string): Promise<any> {
+export async function readJSON<T>(path: string): Promise<T> {
   try {
     const text = await Deno.readTextFile(path);
-    return JSON.parse(text);
+    return JSON.parse(text) as T;
   } catch (error) {
     console.error(`Error reading JSON from ${path}:`, error);
     throw error;
@@ -143,17 +143,3 @@ export async function writeJSON(
     throw error;
   }
 }
-
-/**
- * Helper for logging errors in async functions.
- * @param fn - The async function to wrap.
- * @returns The result of the async function or throws an error.
- */
-export const withErrorLogging = async <T>(fn: () => Promise<T>): Promise<T> => {
-  try {
-    return await fn();
-  } catch (error) {
-    console.error('Error during async operation:', error);
-    throw error;
-  }
-};

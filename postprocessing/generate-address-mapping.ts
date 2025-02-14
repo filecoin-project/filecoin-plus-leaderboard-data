@@ -76,10 +76,12 @@ const fetchAddressData = async (apiEndpoint: string, method: string, address: st
   }
 };
 
+// deno-lint-ignore no-unused-vars
 const fetchAddressById = async (addressId: string) => {
   return await fetchAddressData(GLIF_API_ENDPOINT, 'Filecoin.StateAccountKey', addressId);
 };
 
+// deno-lint-ignore no-unused-vars
 const fetchAddressByKey = async (addressKey: string) => {
   return await fetchAddressData(GLIF_API_ENDPOINT, 'Filecoin.StateLookupID', addressKey);
 };
