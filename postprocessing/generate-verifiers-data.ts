@@ -1,18 +1,21 @@
 import { readJSON, writeJSON } from '../utils/general.ts';
 import _ from 'lodash';
-import moment from 'moment';
-
 import { Verifier } from '../typings/Verifier.ts';
 import { convertHeightToDate, orderByKey } from '../utils/general.ts';
 import { GENERATED_DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH } from '../constants.ts';
 import { NotaryGovernanceIssue } from '../typings/NotaryGovernanceIssue.ts';
 import { InterplanetaryOneVerifiers, VerifierData } from '../typings/InterplanetaryOneVerifiers.ts';
 import {
-  InterplanetaryOneVerifiedClientsResponse,
-  InterplanetaryOneVerifiedClient,
+  InterplanetaryOneVerifiedClientsResponse
 } from '../typings/InterplanetaryOneVerifiedClients.ts';
 import { InterplanetaryOneAllowances } from '../typings/InterplanetaryOneAllowances.ts';
 import { AddressMap } from '../typings/Address.ts';
+import {
+  enrichWithInterplanetaryOne,
+  enrichWithVerifiedClients,
+  enrichWithTtdData,
+  enrichWithLdnTtdData,
+} from '../utils/enrichers.ts';
 
 const notaryGovernanceIssues: NotaryGovernanceIssue[] = await readJSON(
   `${PROCESSED_DATA_PATH}/notary-governance-issues.json`,
@@ -100,149 +103,10 @@ const filterExistsInInterplanetaryOne = (
 
 verifiers.filtered = filterExistsInInterplanetaryOne(verifiers.fromIssues, verifiers.fromInterplanetaryOne);
 
-const enrichWithInterplanetaryOne = (
-  verifiers: NotaryGovernanceIssue[],
-  verifiersFromInterplanetaryOne: InterplanetaryOneVerifiers['data'],
-): Verifier[] =>
-  verifiers.map((verifier) => ({
-    ...verifier,
-    fromInterplanetaryOne: {
-      ...verifiersFromInterplanetaryOne.find(
-        (fromIpo) => verifier.addressId === fromIpo.addressId || verifier.addressKey === fromIpo.address,
-      ),
-    },
-  }));
-
-const enrichWithVerifiedClients = (
-  verifiers: Verifier[],
-  verifiedClientsFromInterplanetaryOne: InterplanetaryOneVerifiedClient[],
-): Verifier[] =>
-  verifiers.map((verifier) => ({
-    ...verifier,
-    verifiedClientsFromInterplanetaryOne:
-      _.groupBy(verifiedClientsFromInterplanetaryOne ?? [], (vc) => vc.verifierAddressId === verifier.addressId).true ??
-        [],
-  }));
-
 verifiers.toOutput = orderVerifiers(enrichWithInterplanetaryOne(verifiers.filtered, verifiers.fromInterplanetaryOne));
 verifiers.toOutput = enrichWithVerifiedClients(verifiers.toOutput, verifiedClients.fromInterplanetaryOne);
-
-const enrichWithTtdData = (verifiers: Verifier[]) => {
-  const humanizeDate = (seconds: number) => moment.duration(seconds, 'seconds').humanize();
-  const calculateTtd = (verifiedClients: InterplanetaryOneVerifiedClientsResponse['data']) => {
-    const data = verifiedClients.map((vc) => {
-      if (!vc.createMessageTimestamp || !vc.issueCreateTimestamp) {
-        return 0;
-      }
-
-      return vc.createMessageTimestamp - vc.issueCreateTimestamp;
-    });
-
-    return data;
-  };
-
-  const calculateTtdAverages = (ttdData: number[]) => {
-    if (_.isEmpty(ttdData)) {
-      return { averageTtd: null, averageTtdRaw: null };
-    }
-
-    const ttdSum = ttdData.reduce((previous, current) => previous + current);
-    const ttdSumInSeconds = Number(Number(ttdSum / ttdData.length).toFixed());
-    const ttdSumInDuration = humanizeDate(ttdSumInSeconds);
-
-    return {
-      averageTtd: ttdSumInDuration,
-      averageTtdRaw: ttdSumInSeconds,
-    };
-  };
-
-  const filterVerifiedClients = (
-    verifiedClients: InterplanetaryOneVerifiedClientsResponse['data'],
-    verifierAddressId: VerifierData['addressId'],
-  ) => {
-    return verifiedClients.filter(
-      (verifiedClient) =>
-        // Remove invalid timestamps
-        !!verifiedClient.createMessageTimestamp &&
-        !!verifiedClient.issueCreateTimestamp &&
-        verifiedClient.createMessageTimestamp > verifiedClient.issueCreateTimestamp &&
-        // Remove allocations with clients having the same addressId as the verifier
-        !!verifierAddressId &&
-        verifiedClient.addressId != verifierAddressId,
-    );
-  };
-
-  return verifiers.map((verifier) => {
-    if (!verifier.verifiedClientsFromInterplanetaryOne || !verifier.addressId) {
-      return {
-        ...verifier,
-        ttdAverages: { averageTtd: null, averageTtdRaw: null },
-      };
-    }
-
-    const ttdData: number[] = calculateTtd(
-      filterVerifiedClients(verifier.verifiedClientsFromInterplanetaryOne, verifier.addressId),
-    );
-    const ttdDataAverages = calculateTtdAverages(ttdData);
-
-    return {
-      ...verifier,
-      ttdAverages: ttdDataAverages,
-    };
-  });
-};
-
-// TODO: refactor this into a reusable module.
-const enrichWithLdnTtdData = (verifiers: Verifier[]) => {
-  // if (_.isEmpty(verifiers)) {
-  //   return [];
-  // };
-
-  const humanizeDate = (seconds: number) => moment.duration(seconds, 'seconds').humanize();
-  const calculateTtdAverages = (ttdData: number[]) => {
-    if (_.isEmpty(ttdData)) {
-      return { averageTtd: null, averageTtdRaw: null };
-    }
-
-    const ttdSum = ttdData.reduce((previous, current) => previous + current);
-    const ttdSumInSeconds = Number(Number(ttdSum / ttdData.length).toFixed());
-    const ttdSumInDuration = humanizeDate(ttdSumInSeconds);
-
-    return {
-      averageTtd: ttdSumInDuration,
-      averageTtdRaw: ttdSumInSeconds,
-    };
-  };
-
-  const allAllowanceSignatures = allowancesFromIpo.data?.flatMap((v) => v.signers)?.filter((v) => !!v.operationTTD) ??
-    []?.filter((v) => !!v);
-
-  const allowancesGroupedByVerifier = _.groupBy(allAllowanceSignatures, _.property('addressId'));
-
-  return verifiers.map((verifier) => {
-    if (!verifier.addressId) {
-      return {
-        ...verifier,
-        ldnTtdAverages: { averageTtd: null, averageTtdRaw: null },
-      };
-    }
-    const ttdData = _.get(allowancesGroupedByVerifier, verifier.addressId)?.map((v) => v.operationTTD);
-    const validTtdData = ttdData?.filter((ttd): ttd is number => ttd !== null);
-    const ldnTtdDataAverages = calculateTtdAverages(validTtdData);
-
-    return {
-      ...verifier,
-      ldnTtdAverages: ldnTtdDataAverages,
-    };
-  });
-};
-
-// TODO: Refactor enrichment functions (enrichWithInterplanetaryOne, enrichWithVerifiedClients, enrichWithTtdData, enrichWithLdnTtdData)
-// into a separate module (e.g., ./utils/enrichers.ts)
-// (Additional refactoring: use early returns and consistent type checks in each enrichment function)
-
 verifiers.toOutput = enrichWithTtdData(verifiers.toOutput);
-verifiers.toOutput = enrichWithLdnTtdData(verifiers.toOutput);
+verifiers.toOutput = enrichWithLdnTtdData(verifiers.toOutput, allowancesFromIpo);
 verifiers.toOutput = _.orderBy(verifiers.toOutput, [(v) => _.get(v, 'ttdAverages.averageTtdRaw')], ['asc']);
 verifiers.toOutput = _.uniqBy(verifiers.toOutput, 'addressId');
 
