@@ -1,136 +1,102 @@
 import { readJSON, writeJSON } from '../utils/general.ts';
-import PQueue from 'p-queue';
 import { isValidAddress } from '../utils/regexes.ts';
 import { NotaryGovernanceIssue } from '../typings/NotaryGovernanceIssue.ts';
 import { InterplanetaryOneVerifiers, VerifierData } from '../typings/InterplanetaryOneVerifiers.ts';
-import { GENERATED_DATA_PATH, GLIF_API_ENDPOINT, PROCESSED_DATA_PATH, RAW_DATA_PATH } from '../constants.ts';
+import { GENERATED_DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH } from '../constants.ts';
 import { AddressMap } from '../typings/Address.ts';
+import { resolveAddresses } from './resolve-addresses.ts';
 
-const notaryGovernanceIssues: NotaryGovernanceIssue[] = await readJSON(
-  `${PROCESSED_DATA_PATH}/notary-governance-issues.json`,
-);
-const verifiersFromInterplanetaryOne: InterplanetaryOneVerifiers = await readJSON(
-  `${RAW_DATA_PATH}/interplanetaryone-verifiers.json`,
-);
+type AddressIdentifier = string | null | undefined;
 
-// TODO(alexxnica): change to on-chain checks or modularize to accept different lists
-// Resolves addressId and addressKey from the InterPlanetary One file.
-const getInitialAddresses = (
+async function loadData() {
+  try {
+    const issues: NotaryGovernanceIssue[] = await readJSON(
+      `${PROCESSED_DATA_PATH}/notary-governance-issues.json`,
+    );
+    const interplanetaryOne: InterplanetaryOneVerifiers = await readJSON(
+      `${RAW_DATA_PATH}/interplanetaryone-verifiers.json`,
+    );
+    return { issues, interplanetaryOne: interplanetaryOne.data };
+  } catch (error) {
+    console.error('Error reading input JSON files:', error);
+    throw error;
+  }
+}
+
+/**
+ * Initializes address map by attempting to match addressId and addressKey
+ * from different data sources.
+ *
+ * @param verifiers - Verifiers from notary governance issues.
+ * @param verifiersFromInterplanetaryOne - Verifiers from Interplanetary One.
+ * @returns An array of address maps with initial addressId and addressKey.
+ */
+const initializeAddressMap = (
   verifiers: NotaryGovernanceIssue[],
   verifiersFromInterplanetaryOne: VerifierData[],
 ): AddressMap[] => {
   return verifiers.map((verifier) => {
-    let addressId = verifier.addressId;
-    let addressKey = verifier.addressKey;
+    let addressId: AddressIdentifier = verifier.addressId;
+    let addressKey: AddressIdentifier = verifier.addressKey;
 
-    if (!addressId && !!addressKey) {
-      addressId = verifiersFromInterplanetaryOne.find((v) => v.address === addressKey)?.addressId ?? null;
+    if (!addressId && addressKey) {
+      const found = verifiersFromInterplanetaryOne.find((v) => v.address === addressKey);
+      addressId = found?.addressId;
     }
 
-    if (!addressKey && !!addressId) {
-      addressKey = verifiersFromInterplanetaryOne.find((v) => v.addressId === addressId)?.address ?? null;
+    if (!addressKey && addressId) {
+      const found = verifiersFromInterplanetaryOne.find((v) => v.addressId === addressId);
+      addressKey = found?.address;
     }
 
     return {
-      addressId: addressId || null,
-      addressKey: addressKey || null,
+      addressId: addressId ?? null,
+      addressKey: addressKey ?? null,
     };
   });
 };
 
-// Add a simple cache to avoid duplicate network calls.
-const addressCache = new Map<string, string>();
-
-const fetchAddressData = async (apiEndpoint: string, method: string, address: string) => {
-  // Check cache first
-  const cacheKey = `${method}-${address}`;
-  if (addressCache.has(cacheKey)) {
-    return addressCache.get(cacheKey);
+const deduplicateAddresses = (addresses: AddressMap[]): AddressMap[] => {
+  const seen = new Set<string>();
+  const unique: AddressMap[] = [];
+  for (const addr of addresses) {
+    const key = `${addr.addressId}-${addr.addressKey}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(addr);
+    }
   }
+  return unique;
+};
+
+async function main() {
+  const { issues, interplanetaryOne } = await loadData();
+
+  let resolvedAddresses = initializeAddressMap(issues, interplanetaryOne);
+  console.log('Initial address map length:', resolvedAddresses.length);
+
+  resolvedAddresses = await resolveAddresses(resolvedAddresses);
+  console.log('After resolution, addresses count:', resolvedAddresses.length);
+
+  // Filter out invalid addresses
+  resolvedAddresses = resolvedAddresses.filter(({ addressId, addressKey }) =>
+    addressId !== null && addressKey !== null && isValidAddress(addressId) && isValidAddress(addressKey)
+  );
+
+  // Remove duplicates and sort by addressId.
+  resolvedAddresses = deduplicateAddresses(resolvedAddresses).sort((a, b) =>
+    a.addressId?.localeCompare(b.addressId ?? '') || 0
+  );
+  console.log('Resolved and filtered addresses count:', resolvedAddresses.length);
+
   try {
-    const response = await fetch(apiEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method,
-        id: 1,
-        params: [address, null],
-      }),
-    });
-    const data = await response.json();
-
-    if (!data.result) {
-      console.error(`No result returned for ${method} with address ${address}`);
-      // throw new Error(`No result returned for ${method} with address ${address}`);
-    }
-
-    addressCache.set(cacheKey, data.result);
-    return data.result;
+    await writeJSON(`${GENERATED_DATA_PATH}/address-mapping.json`, resolvedAddresses);
+    console.log('Address mapping written to file.');
   } catch (error) {
-    console.error(`Error fetching data for ${method} with address ${address}:`, error);
-
-    return null;
+    console.error('Error writing address mapping to file:', error);
   }
-};
+}
 
-// deno-lint-ignore no-unused-vars
-const fetchAddressById = async (addressId: string) => {
-  return await fetchAddressData(GLIF_API_ENDPOINT, 'Filecoin.StateAccountKey', addressId);
-};
-
-// deno-lint-ignore no-unused-vars
-const fetchAddressByKey = async (addressKey: string) => {
-  return await fetchAddressData(GLIF_API_ENDPOINT, 'Filecoin.StateLookupID', addressKey);
-};
-
-const resolveAddressesWithGlif = async (addressMap: AddressMap[]): Promise<AddressMap[]> => {
-  const queue = new PQueue({ concurrency: 4, interval: 500 });
-  // use GLIF_API_ENDPOINT from constants, not a hardcoded string
-  const apiEndpoint = GLIF_API_ENDPOINT;
-
-  const promises = addressMap.map(async (addresses) => {
-    let { addressId, addressKey } = addresses;
-
-    if (!addressId && addressKey) {
-      addressId = await queue.add(() => fetchAddressData(apiEndpoint, 'Filecoin.StateLookupID', addressKey!));
-    }
-
-    if (!addressKey && addressId) {
-      addressKey = await queue.add(() => fetchAddressData(apiEndpoint, 'Filecoin.StateAccountKey', addressId));
-    }
-
-    return { addressId: addressId || null, addressKey: addressKey || null };
-  });
-
-  const newAddressMap = await Promise.all(promises);
-  await queue.onIdle();
-
-  return newAddressMap;
-};
-
-const verifiers = {
-  fromIssues: notaryGovernanceIssues,
-  fromInterplanetaryOne: verifiersFromInterplanetaryOne.data,
-  resolvedAddresses: [] as AddressMap[],
-};
-
-verifiers.resolvedAddresses = getInitialAddresses(
-  verifiers.fromIssues,
-  verifiers.fromInterplanetaryOne,
-);
-
-verifiers.resolvedAddresses = await resolveAddressesWithGlif(
-  verifiers.resolvedAddresses,
-);
-
-// Filter out invalid addresses
-verifiers.resolvedAddresses = verifiers.resolvedAddresses.filter(({ addressId, addressKey }) =>
-  addressId !== null && addressKey !== null && isValidAddress(addressId) && isValidAddress(addressKey)
-);
-
-console.log('Resolved addresses:', verifiers.resolvedAddresses.length);
-
-await writeJSON(`${GENERATED_DATA_PATH}/address-mapping.json`, verifiers.resolvedAddresses);
+main().catch((error) => {
+  console.error('Error processing address mappings:', error);
+});
