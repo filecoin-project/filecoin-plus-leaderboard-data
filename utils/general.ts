@@ -14,9 +14,19 @@ export const sanitizeString = (string: string): string =>
     ?.replace(/<\/?[^>]*>/gi, '')
     ?.replace(/^\[|\]$/gi, '');
 
-export const isAddressKey = (address: string): boolean => address?.length >= 14 && address?.length <= 100;
+/**
+ * Checks if address key is valid by length.
+ */
+export const isAddressKey = (address: string): boolean => {
+  return address.length >= 14 && address.length <= 100;
+};
 
-export const isAddressId = (address: string): boolean => address?.length > 4 && address?.length <= 13;
+/**
+ * Checks if address id is valid by length.
+ */
+export const isAddressId = (address: string): boolean => {
+  return address.length >= 4 && address.length <= 20;
+};
 
 const validRegions = [
   'AFRICA',
