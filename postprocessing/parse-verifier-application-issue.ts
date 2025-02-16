@@ -125,9 +125,11 @@ const removeInvalidApplications = (applications: NotaryGovernanceIssue[]) =>
 const removeDuplicates = (applications: NotaryGovernanceIssue[]) => {
   let data = applications;
   data = _.orderBy(data, ['issueNumber'], ['desc']);
-  data = (data.some(item => item.addressId) ? _.uniqBy(data, 'addressId')
-        : data.some(item => item.addressKey) ? _.uniqBy(data, 'addressKey')
-        : data);
+  data = data.some((item) => item.addressId)
+    ? _.uniqBy(data, 'addressId')
+    : data.some((item) => item.addressKey)
+    ? _.uniqBy(data, 'addressKey')
+    : data;
   return data;
 };
 

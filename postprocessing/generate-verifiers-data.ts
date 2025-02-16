@@ -5,16 +5,14 @@ import { convertHeightToDate, orderByKey } from '../utils/general.ts';
 import { GENERATED_DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH } from '../constants.ts';
 import { NotaryGovernanceIssue } from '../typings/NotaryGovernanceIssue.ts';
 import { InterplanetaryOneVerifiers, VerifierData } from '../typings/InterplanetaryOneVerifiers.ts';
-import {
-  InterplanetaryOneVerifiedClientsResponse
-} from '../typings/InterplanetaryOneVerifiedClients.ts';
+import { InterplanetaryOneVerifiedClientsResponse } from '../typings/InterplanetaryOneVerifiedClients.ts';
 import { InterplanetaryOneAllowances } from '../typings/InterplanetaryOneAllowances.ts';
 import { AddressMap } from '../typings/Address.ts';
 import {
   enrichWithInterplanetaryOne,
-  enrichWithVerifiedClients,
-  enrichWithTtdData,
   enrichWithLdnTtdData,
+  enrichWithTtdData,
+  enrichWithVerifiedClients,
 } from '../utils/enrichers.ts';
 
 const notaryGovernanceIssues: NotaryGovernanceIssue[] = await readJSON(
