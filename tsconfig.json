@@ -7,7 +7,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "incremental": true,
-    "experimentalDecorators": true
+    "incremental": true
   }
 }

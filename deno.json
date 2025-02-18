@@ -15,5 +15,10 @@
     "proseWrap": "preserve",
     "include": ["postprocessing/**/*.ts", "utils/**/*.ts", "typings/**/*.ts"],
     "exclude": ["data/"]
-  }
+  },
+  "compilerOptions": {
+    "lib": ["esnext", "dom", "deno.ns"],
+    "strict": true
+  },
+  "unstable": ["sloppy-imports"]
 }
