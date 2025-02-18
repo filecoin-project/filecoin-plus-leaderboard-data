@@ -41,5 +41,11 @@ export const regionIsGlobal = (v: string) => /^\s*(Global)\s*$/im.test(v);
 export const regionIsOther = (v: string) => /^\s*(Other)\s*$/im.test(v);
 
 export const isValidAddress = (address: string) => {
-  return /^f[a-zA-Z0-9]+$/im.test(address);
+  // If the address begins with f0, treat it as address ID and validate according to the address ID regex.
+  if (address.startsWith('f0')) {
+    return /^f0[a-zA-Z0-9]{4,20}$/im.test(address);
+  } else {
+    // Otherwise, treat it as address key and validate according to the address key regex.
+    return /^f[a-zA-Z0-9]{14,100}$/im.test(address);
+  }
 };

@@ -54,6 +54,7 @@ export async function resolveAddresses(
           addressId: id ?? null,
           addressKey: key ?? null,
         });
+
         // console.log('Resolved address:', { id, key });
       } catch (error) {
         console.error('Error resolving address for', addressData, error);
@@ -63,7 +64,7 @@ export async function resolveAddresses(
     });
   });
 
-  // Wait until the queue is idle.
+  // Wait until the queue is idle (all tasks are completed).
   await queue.onIdle();
 
   if (errors.length > 0) {

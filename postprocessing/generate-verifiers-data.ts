@@ -62,6 +62,8 @@ const verifiers: {
   filtered: [],
   toOutput: [],
 };
+console.log(`Total verifiers from issues:`, verifiers.fromIssues.length);
+console.log(`Total verifiers from Interplanetary One:`, verifiers.fromInterplanetaryOne.length);
 
 const verifiedClients: {
   fromInterplanetaryOne: InterplanetaryOneVerifiedClientsResponse['data'];
@@ -100,20 +102,42 @@ const filterExistsInInterplanetaryOne = (
   );
 
 verifiers.filtered = filterExistsInInterplanetaryOne(verifiers.fromIssues, verifiers.fromInterplanetaryOne);
+console.log(`Total verifiers after filtering:`, verifiers.filtered.length);
 
-verifiers.toOutput = orderVerifiers(enrichWithInterplanetaryOne(verifiers.filtered, verifiers.fromInterplanetaryOne));
+verifiers.toOutput = enrichWithInterplanetaryOne(verifiers.filtered, verifiers.fromInterplanetaryOne);
+console.log(`Total verifiers after enriching with Interplanetary One data:`, verifiers.toOutput.length);
+
+verifiers.toOutput = orderVerifiers(verifiers.toOutput);
+console.log('Total verifiers after ordering:', verifiers.toOutput.length);
+
 verifiers.toOutput = enrichWithVerifiedClients(verifiers.toOutput, verifiedClients.fromInterplanetaryOne);
+console.log('Total verifiers after enriching with Interplanetary One data:', verifiers.toOutput.length);
+
 verifiers.toOutput = enrichWithTtdData(verifiers.toOutput);
+console.log('Total verifiers after enriching with TTD data:', verifiers.toOutput.length);
+
 verifiers.toOutput = enrichWithLdnTtdData(verifiers.toOutput, allowancesFromIpo);
+console.log('Total verifiers after enriching with LDN TTD data:', verifiers.toOutput.length);
+
+// Sort by TTD
 verifiers.toOutput = _.orderBy(verifiers.toOutput, [(v) => _.get(v, 'ttdAverages.averageTtdRaw')], ['asc']);
+
+// Deduplicate verifiers by addressId
 verifiers.toOutput = _.uniqBy(verifiers.toOutput, 'addressId');
+console.log('Total verifiers after deduplication:', verifiers.toOutput.length);
 
 // TODO(alexxnica): Find a better way of organizing filters.
 // Additional filters
-verifiers.toOutput = verifiers.toOutput
-  .filter((verifier) => !!verifier.name)
-  .filter((verifier) => verifier.name != 'n/a')
-  .filter((verifier) => verifier.name && !/Testing[^a-zA-Z]*Deleted/i.test(verifier.name));
+verifiers.toOutput = verifiers.toOutput.filter((verifier) => !!verifier.name);
+console.log('Total verifiers after filtering out empty names:', verifiers.toOutput.length);
+
+verifiers.toOutput = verifiers.toOutput.filter((verifier) => verifier.name != 'n/a');
+console.log('Total verifiers after filtering out "n/a" names:', verifiers.toOutput.length);
+
+verifiers.toOutput = verifiers.toOutput.filter((verifier) =>
+  verifier.name && !/Testing[^a-zA-Z]*Deleted/i.test(verifier.name)
+);
+console.log('Total verifiers after filtering out "Testing Deleted" names:', verifiers.toOutput.length);
 
 // TODO(alexxnica): organize, refine, and refactor this.
 verifiers.toOutput = verifiers.toOutput.map((verifier) => {
@@ -144,10 +168,25 @@ verifiers.toOutput = verifiers.toOutput.map((verifier) => {
   };
 });
 
+console.log(
+  `Verifiers with isMultisig set to true:`,
+  verifiers.toOutput.filter((v) => v.fromInterplanetaryOne?.isMultisig).length,
+);
+console.log(
+  'Verifiers with isMultisig set to false:',
+  verifiers.toOutput.filter((v) => !v.fromInterplanetaryOne?.isMultisig).length,
+);
+
 // Remove all multisigs from the output (because they're all (presumably) LDNs and not verifiers)
-verifiers.toOutput = verifiers.toOutput.filter((v) => !v.fromInterplanetaryOne?.isMultisig);
+verifiers.toOutput = verifiers.toOutput.filter((v) => {
+  if (!v.fromInterplanetaryOne?.isMultisig) return true;
+
+  return false;
+});
+console.log('Total verifiers after filtering out multisigs:', verifiers.toOutput.length);
+
 verifiers.toOutputOrdered = orderByKey(verifiers.toOutput);
 
-console.log(`Total verifiers: ${verifiers.toOutput.length}`);
+console.log('Total verifiers:', verifiers.toOutputOrdered.length);
 
 await writeJSON(`${GENERATED_DATA_PATH}/verifiers.json`, verifiers.toOutputOrdered);

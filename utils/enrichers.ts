@@ -9,15 +9,20 @@ import { InterplanetaryOneAllowances } from '../typings/InterplanetaryOneAllowan
 export const enrichWithInterplanetaryOne = (
   verifiers: NotaryGovernanceIssue[],
   verifiersFromInterplanetaryOne: InterplanetaryOneVerifiers['data'],
-): Verifier[] =>
-  verifiers.map((verifier) => ({
-    ...verifier,
-    fromInterplanetaryOne: {
-      ...verifiersFromInterplanetaryOne.find(
-        (fromIpo) => verifier.addressId === fromIpo.addressId || verifier.addressKey === fromIpo.address,
-      ),
-    },
-  }));
+): Verifier[] => {
+  return verifiers.map((verifier) => {
+    const verifierData = {
+      ...verifier,
+      fromInterplanetaryOne: {
+        ...verifiersFromInterplanetaryOne.find(
+          (fromIpo) => verifier.addressId === fromIpo.addressId || verifier.addressKey === fromIpo.address,
+        ),
+      },
+    };
+
+    return verifierData;
+  });
+};
 
 export const enrichWithVerifiedClients = (
   verifiers: Verifier[],

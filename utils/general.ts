@@ -8,11 +8,12 @@ import { NotaryGovernanceIssue } from '../typings/NotaryGovernanceIssue.ts';
  * @param string - Input string to sanitize.
  * @returns The sanitized string.
  */
-export const sanitizeString = (string: string): string =>
-  string
+export const sanitizeString = (string: string): string => {
+  return string
     ?.trim()
     ?.replace(/<\/?[^>]*>/gi, '')
     ?.replace(/^\[|\]$/gi, '');
+};
 
 /**
  * Checks if address key is valid by length.
@@ -72,8 +73,8 @@ export const normalizeRegion = (region: string): ValidRegion[] => {
  * @param verifier - The verifier object to normalize.
  * @returns The normalized NotaryGovernanceIssue.
  */
-export const normalizeVerifier = (verifier: NotaryGovernanceIssue): NotaryGovernanceIssue =>
-  Object.entries(verifier).reduce<Partial<NotaryGovernanceIssue>>((acc, [key, value]) => {
+export const normalizeVerifier = (verifier: NotaryGovernanceIssue): NotaryGovernanceIssue => {
+  return Object.entries(verifier).reduce<Partial<NotaryGovernanceIssue>>((acc, [key, value]) => {
     let newValue = typeof value === 'string' ? value.trim() : value;
 
     if (key === 'region' && typeof newValue === 'string') {
@@ -92,12 +93,10 @@ export const normalizeVerifier = (verifier: NotaryGovernanceIssue): NotaryGovern
 
     // Direct assignment with correct type.
     acc[key as keyof NotaryGovernanceIssue] = newValue;
+
     return acc;
   }, {}) as NotaryGovernanceIssue;
-
-export const normalizeVerifiers = (
-  verifiers: NotaryGovernanceIssue[],
-): NotaryGovernanceIssue[] => verifiers.map(normalizeVerifier);
+};
 
 export const convertHeightToUnix = (filHeight: number): number =>
   filHeight * FIL_BLOCK_TIME + FILECOIN_GENESIS_UNIX_EPOCH;

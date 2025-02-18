@@ -1,13 +1,5 @@
 import _ from 'lodash';
-import {
-  isAddressId,
-  isAddressKey,
-  normalizeVerifier,
-  normalizeVerifiers,
-  readJSON,
-  sanitizeString,
-  writeJSON,
-} from '../utils/general.ts';
+import { isAddressId, isAddressKey, normalizeVerifier, readJSON, sanitizeString, writeJSON } from '../utils/general.ts';
 import { render } from 'gfm';
 import { getAddress, getName, getOrganization, getRegion, getWebsiteAndSocial } from '../utils/regexes.ts';
 import { GithubIssue } from '../typings/GithubIssue.ts';
@@ -48,14 +40,14 @@ export const parseVerifierApplicationFromIssue = (
   options?: { normalized: boolean | undefined },
 ): NotaryGovernanceIssue | undefined => {
   if (!issue) return;
+
   const bodyParsed = render(issue.body);
 
   const regionMatch = getRegion(bodyParsed);
-  const region = regionMatch ? sanitizeString(regionMatch[1]) : undefined;
+  const region = regionMatch ? sanitizeString(regionMatch) : undefined;
 
   const addressMatch = getAddress(bodyParsed);
-  let address = addressMatch ? addressMatch[1] : undefined;
-
+  let address = addressMatch ? addressMatch : undefined;
   address = address || findAddressInComments(issue);
 
   /**
@@ -70,17 +62,21 @@ export const parseVerifierApplicationFromIssue = (
     // If the first address-like string is not a valid address, return the original address
     return addr?.[0] || address;
   };
-  address = sanitizeAddress(sanitizeString(address || '')) || '';
+
+  address = sanitizeString(address || '');
+  address = sanitizeAddress(address) || '';
 
   const addressId = isAddressId(address) && address.toLowerCase();
   const addressKey = isAddressKey(address) && address.toLowerCase();
+
   const nameMatch = getName(bodyParsed);
-  const name = nameMatch ? sanitizeString(nameMatch[1]) : null;
+  const name = nameMatch ? sanitizeString(nameMatch) : null;
+
   const orgMatch = getOrganization(bodyParsed);
-  const organization = orgMatch ? sanitizeString(orgMatch[1]) : null;
+  const organization = orgMatch ? sanitizeString(orgMatch) : null;
 
   const websiteAndSocialMatch = getWebsiteAndSocial(bodyParsed);
-  const websiteAndSocial = websiteAndSocialMatch ? sanitizeString(websiteAndSocialMatch[1]) : null;
+  const websiteAndSocial = websiteAndSocialMatch ? sanitizeString(websiteAndSocialMatch) : null;
 
   const data: NotaryGovernanceIssue = {
     issueNumber: issue.number,
@@ -92,30 +88,45 @@ export const parseVerifierApplicationFromIssue = (
     websiteAndSocial,
   };
 
-  return options?.normalized ? normalizeVerifier(data) : data;
+  const output = options?.normalized ? normalizeVerifier(data) : data;
+
+  return output;
 };
 
 /**
  * Parses verifier applications from a list of GitHub issues.
  *
- * @param {GithubIssue[]} issues - The list of GitHub issues to parse.
- * @param {Object} [options] - Optional settings.
- * @param {boolean} [options.normalized] - Whether to normalize the parsed data.
- * @returns {Object[]} The parsed verifier applications.
+ * @param issues - The list of GitHub issues to parse.
+ * @param options - Optional settings.
+ * @param options.normalized - Whether to normalize the parsed data.
+ * @returns The parsed verifier applications.
  */
 export const parseVerifierApplicationFromIssues = (
   issues: GithubIssue[] = [],
   options?: { normalized: boolean | undefined },
 ) => {
+  console.log('Parsing verifier applications from issues:', issues.length);
   const data = [];
   for (const issue of issues) {
-    const parsedData = parseVerifierApplicationFromIssue(issue);
+    const parsedData = parseVerifierApplicationFromIssue(issue, options);
     if (parsedData) {
+      // if (options?.normalized) {
+      //   const normalizedData = normalizeVerifier(parsedData);
+      //   console.log('parseVerifierApplicationFromIssues > options.normalized > normalizedData:', normalizedData);
+      //   // console.log('parseVerifierApplicationFromIssues > options.normalized > parsedData:', parsedData);
+      //   data.push(normalizedData);
+      // } else {
+      //   console.log('parseVerifierApplicationFromIssues > parsedData:', parsedData);
+      //   data.push(parsedData);
+      // }
       data.push(parsedData);
     }
   }
 
-  return options?.normalized ? normalizeVerifiers(data) : data;
+  const output = data;
+  console.log('Number of parsed verifier issues available for processing after cleaning:', output.length);
+
+  return output;
 };
 
 // Applications are considered invalid if having more than 3 fields empty.
@@ -123,6 +134,8 @@ const removeInvalidApplications = (applications: NotaryGovernanceIssue[]) =>
   applications.filter((v) => Object.entries(v).filter((n) => n[1]).length > 3);
 
 const removeDuplicates = (applications: NotaryGovernanceIssue[]) => {
+  console.log('Applications before removing duplicates:', applications.length);
+
   let data = applications;
   data = _.orderBy(data, ['issueNumber'], ['desc']);
   data = data.some((item) => item.addressId)
@@ -130,22 +143,28 @@ const removeDuplicates = (applications: NotaryGovernanceIssue[]) => {
     : data.some((item) => item.addressKey)
     ? _.uniqBy(data, 'addressKey')
     : data;
+  console.log('Applications after removing duplicates:', data.length);
+
   return data;
 };
 
 export const getParsedVerifierIssues = () => {
   let data;
+
   data = parseVerifierApplicationFromIssues(notaryGovernanceIssues, {
     normalized: true,
   });
+  console.log('Number of verifier issues parsed from raw data before cleaning:', data.length);
+
   data = removeInvalidApplications(data);
-  data = removeDuplicates(data);
+  console.log('Number of valid verifier issues remaining after filtering out invalid entries:', data.length);
+
+  // data = removeDuplicates(data);
 
   return data;
 };
 
 const parsedVerifierApplications = getParsedVerifierIssues();
-
 console.log('Parsed verifier applications:', parsedVerifierApplications.length);
 
 await writeJSON(

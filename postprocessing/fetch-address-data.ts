@@ -31,7 +31,7 @@ export const fetchAddressData = async (
 
   const cacheKey = `${method}-${address}`;
   if (addressCache.has(cacheKey)) {
-    console.log(`[CACHE] Cache hit for ${cacheKey}`);
+    console.log(`Cache hit for ${cacheKey}`);
     return addressCache.get(cacheKey) || null;
   }
 
@@ -39,7 +39,7 @@ export const fetchAddressData = async (
     const response = await fetch(apiEndpoint, getRequestOptions(method, address));
 
     if (!response.ok) {
-      console.error(`${red}[HTTP]${reset} Error! Status: ${response.status}, Method: ${method}, Address: ${address}`);
+      console.error(`HTTP Error - Status: ${response.status}, Method: ${method}, Address: ${address}`);
       return null;
     }
 
@@ -58,7 +58,7 @@ export const fetchAddressData = async (
 
     // Cache result for future calls
     addressCache.set(cacheKey, data.result);
-    // console.log(`[CACHE] Storing result for ${cacheKey}`);
+    // console.log(`Caching response for key ${cacheKey}`);
     return data.result;
   } catch (error) {
     console.error(`Failed to fetch ${method} data for address ${address}:`, error);

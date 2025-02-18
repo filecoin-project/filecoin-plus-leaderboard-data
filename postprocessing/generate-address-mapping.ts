@@ -76,7 +76,7 @@ async function main() {
   console.log('Initial address map length:', resolvedAddresses.length);
 
   resolvedAddresses = await resolveAddresses(resolvedAddresses);
-  console.log('After resolution, addresses count:', resolvedAddresses.length);
+  console.log('Number of addresses after resolve:', resolvedAddresses.length);
 
   // Filter out invalid addresses
   resolvedAddresses = resolvedAddresses.filter(({ addressId, addressKey }) =>
@@ -87,7 +87,7 @@ async function main() {
   resolvedAddresses = deduplicateAddresses(resolvedAddresses).sort((a, b) =>
     a.addressId?.localeCompare(b.addressId ?? '') || 0
   );
-  console.log('Resolved and filtered addresses count:', resolvedAddresses.length);
+  console.log('Number of resolved and filtered addresses:', resolvedAddresses.length);
 
   try {
     await writeJSON(`${GENERATED_DATA_PATH}/address-mapping.json`, resolvedAddresses);
