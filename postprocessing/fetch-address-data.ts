@@ -39,6 +39,9 @@ export const fetchAddressData = async (
     const response = await fetch(apiEndpoint, getRequestOptions(method, address));
 
     if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error(`HTTP 429 - Rate limited for ${method} with address ${address}`);
+      }
       console.error(`HTTP Error - Status: ${response.status}, Method: ${method}, Address: ${address}`);
       return null;
     }
