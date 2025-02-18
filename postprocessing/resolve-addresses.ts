@@ -28,7 +28,7 @@ let addressCount = 0;
  */
 export async function resolveAddresses(
   addresses: AddressMap[],
-  options = { concurrency: 50, interval: 300, intervalCap: 50 },
+  options = { concurrency: 5, interval: 1000, intervalCap: 5 },
 ): Promise<AddressMap[]> {
   console.log(`Resolving ${addresses.length} addresses...`);
 
