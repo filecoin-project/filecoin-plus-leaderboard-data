@@ -133,21 +133,6 @@ export const parseVerifierApplicationFromIssues = (
 const removeInvalidApplications = (applications: NotaryGovernanceIssue[]) =>
   applications.filter((v) => Object.entries(v).filter((n) => n[1]).length > 3);
 
-const removeDuplicates = (applications: NotaryGovernanceIssue[]) => {
-  console.log('Applications before removing duplicates:', applications.length);
-
-  let data = applications;
-  data = _.orderBy(data, ['issueNumber'], ['desc']);
-  data = data.some((item) => item.addressId)
-    ? _.uniqBy(data, 'addressId')
-    : data.some((item) => item.addressKey)
-    ? _.uniqBy(data, 'addressKey')
-    : data;
-  console.log('Applications after removing duplicates:', data.length);
-
-  return data;
-};
-
 export const getParsedVerifierIssues = () => {
   let data;
 

@@ -1,10 +1,6 @@
 import { GLIF_API_ENDPOINT } from '../constants.ts';
 import { isValidAddress } from '../utils/regexes.ts';
 
-// Color codes for console output
-const red = '\x1b[31m';
-const reset = '\x1b[0m';
-
 // Simple cache to avoid duplicate network calls.
 export const addressCache = new Map<string, string>();
 
