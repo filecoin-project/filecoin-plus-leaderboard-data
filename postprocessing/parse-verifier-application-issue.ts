@@ -1,113 +1,173 @@
-// deno-lint-ignore-file
-import _ from "lodash";
-import { readJSON, writeJSON } from "../utils/general.ts";
-import { render } from "gfm";
-import {
-  isAddressId,
-  isAddressKey,
-  normalizeVerifier,
-  normalizeVerifiers,
-  trimAndClean,
-} from "../utils/general.ts";
-import * as regexes from "../utils/regexes.ts";
+import _ from 'lodash';
+import { isAddressId, isAddressKey, normalizeVerifier, readJSON, sanitizeString, writeJSON } from '../utils/general.ts';
+import { render } from 'gfm';
+import { getAddress, getName, getOrganization, getRegion, getWebsiteAndSocial } from '../utils/regexes.ts';
+import { GithubIssue } from '../typings/GithubIssue.ts';
+import { PROCESSED_DATA_PATH, RAW_DATA_PATH } from '../constants.ts';
+import { NotaryGovernanceIssue } from '../typings/NotaryGovernanceIssue.ts';
 
-const notaryGovernanceIssues = await readJSON(
-  "./data/raw/notary-governance-issues.json",
+const notaryGovernanceIssues: GithubIssue[] = await readJSON(
+  `${RAW_DATA_PATH}/notary-governance-issues.json`,
 );
 
+// If address is not present in the issue body, we look for it in the comments
+const findAddressInComments = (issue: GithubIssue) => {
+  if (Array.isArray(issue.comments.edges) && issue.comments.edges.length > 0) {
+    let addr;
+
+    // Match the first address-like string in the comments
+    addr = issue.comments.edges.map((v) => v.node)
+      ?.flatMap((v) => v.body)
+      ?.filter((v) => /approved.*\r\n.*address/im.test(v))
+      ?.flat();
+
+    addr = /approved.*[\r\n]*.*address.*[\r\n]*.*\s+(f[0-9]+[^\r]+)/im.exec(
+      addr[0],
+    );
+
+    return addr && addr[1] ? addr[1] : undefined;
+  }
+};
+
+/**
+ * Parses a verifier application from a GitHub issue.
+ * @param issue - The GitHub issue to parse.
+ * @param options - Optional settings.
+ * @returns The parsed verifier application.
+ */
 export const parseVerifierApplicationFromIssue = (
-  issue: any = undefined,
+  issue: GithubIssue | undefined = undefined,
   options?: { normalized: boolean | undefined },
-) => {
+): NotaryGovernanceIssue | undefined => {
+  if (!issue) return;
+
   const bodyParsed = render(issue.body);
 
-  const region = regexes.getRegion(bodyParsed) &&
-    trimAndClean(regexes.getRegion(bodyParsed)[1]);
+  const regionMatch = getRegion(bodyParsed);
+  const region = regionMatch ? sanitizeString(regionMatch) : undefined;
 
-  // If address is not present in the issue body, we look for it in the comments
-  let address = regexes.getAddress(bodyParsed) as unknown as string;
-  let newAddress;
-  if ((!address || !address[1]) && Array.isArray(issue.comments)) {
-    const { comments } = issue;
+  const addressMatch = getAddress(bodyParsed);
+  let address = addressMatch ? addressMatch : undefined;
+  address = address || findAddressInComments(issue);
 
-    newAddress = comments
-      ?.flatMap((v: any) => v.body)
-      ?.filter((v: any) => /approved.*\r\n.*address/im.test(v))
-      ?.flat();
-    newAddress = address &&
-      /approved.*[\r\n]*.*address.*[\r\n]*.*\s+(f[0-9]+[^\r]+)/im.exec(
-        address[0],
-      );
-  }
-  address = newAddress || (address && address[1]);
-  const tempCleanAddress = (address) => {
+  /**
+   * Sanitizes an address by removing any leading or trailing whitespace and ensuring it is a valid address.
+   * @param address - The address to clean.
+   * @returns The cleaned address.
+   */
+  const sanitizeAddress = (address: string) => {
+    // Match the first address-like string in the body
     const addr = /^f[^\s]+/im.exec(address);
+
+    // If the first address-like string is not a valid address, return the original address
     return addr?.[0] || address;
   };
-  address = tempCleanAddress(trimAndClean(address));
+
+  address = sanitizeString(address || '');
+  address = sanitizeAddress(address) || '';
 
   const addressId = isAddressId(address) && address.toLowerCase();
   const addressKey = isAddressKey(address) && address.toLowerCase();
-  const name = regexes.getName(bodyParsed) &&
-    trimAndClean(regexes.getName(bodyParsed)[1]);
-  // if (issue.number === 460) console.log('bodyParsed(460) ->', bodyParsed);
-  // if (issue.number === 460) console.log('getName(bodyParsed)(460) ->', getName(bodyParsed));
-  const organization = regexes.getOrganization(bodyParsed) &&
-    trimAndClean(regexes.getOrganization(bodyParsed)[1]);
-  const websiteAndSocial = regexes.getWebsiteAndSocial(bodyParsed) &&
-    trimAndClean(regexes.getWebsiteAndSocial(bodyParsed)[1]);
 
-  const data = {
+  const nameMatch = getName(bodyParsed);
+  const name = nameMatch ? sanitizeString(nameMatch) : null;
+
+  const orgMatch = getOrganization(bodyParsed);
+  const organization = orgMatch ? sanitizeString(orgMatch) : null;
+
+  const websiteAndSocialMatch = getWebsiteAndSocial(bodyParsed);
+  const websiteAndSocial = websiteAndSocialMatch ? sanitizeString(websiteAndSocialMatch) : null;
+
+  const data: NotaryGovernanceIssue = {
     issueNumber: issue.number,
     addressId: addressId || null,
     addressKey: addressKey || null,
     name,
     organization,
-    region,
+    region: region ? region : [],
     websiteAndSocial,
   };
 
-  return (!!options?.normalized && normalizeVerifier(data)) || data;
+  const output = options?.normalized ? normalizeVerifier(data) : data;
+
+  return output;
 };
 
+/**
+ * Parses verifier applications from a list of GitHub issues.
+ *
+ * @param issues - The list of GitHub issues to parse.
+ * @param options - Optional settings.
+ * @param options.normalized - Whether to normalize the parsed data.
+ * @returns The parsed verifier applications.
+ */
 export const parseVerifierApplicationFromIssues = (
-  issues: any = [],
+  issues: GithubIssue[] = [],
   options?: { normalized: boolean | undefined },
 ) => {
-  const data = issues?.map((v) => {
-    const data = parseVerifierApplicationFromIssue(v);
-    return data;
-  }).filter((v) => !!v);
+  console.log('Parsing verifier applications from issues:', issues.length);
+  const data = [];
+  for (const issue of issues) {
+    const parsedData = parseVerifierApplicationFromIssue(issue, options);
+    if (parsedData) {
+      // if (options?.normalized) {
+      //   const normalizedData = normalizeVerifier(parsedData);
+      //   console.log('parseVerifierApplicationFromIssues > options.normalized > normalizedData:', normalizedData);
+      //   // console.log('parseVerifierApplicationFromIssues > options.normalized > parsedData:', parsedData);
+      //   data.push(normalizedData);
+      // } else {
+      //   console.log('parseVerifierApplicationFromIssues > parsedData:', parsedData);
+      //   data.push(parsedData);
+      // }
+      data.push(parsedData);
+    }
+  }
 
-  return (!!options?.normalized && normalizeVerifiers(data)) || data;
+  const output = data;
+  console.log('Number of parsed verifier issues available for processing after cleaning:', output.length);
+
+  return output;
 };
 
 // Applications are considered invalid if having more than 3 fields empty.
-const removeInvalidApplications = (applications: any) =>
-  applications.filter((v: {}) =>
-    Object.entries(v).filter((n) => n[1]).length > 3
-  );
+const removeInvalidApplications = (applications: NotaryGovernanceIssue[]) =>
+  applications.filter((v) => Object.entries(v).filter((n) => n[1]).length > 3);
 
-const removeDuplicates = (applications: any) => {
+const removeDuplicates = (applications: NotaryGovernanceIssue[]) => {
+  console.log('Applications before removing duplicates:', applications.length);
+
   let data = applications;
-  data = _.orderBy(data, ["issueNumber"], ["desc"]);
-  data = (!!data.addressId && _.uniqBy(data, "addressId") ||
-    !!data.addressKey && _.uniqBy(data, "addressKey")) || data;
+  data = _.orderBy(data, ['issueNumber'], ['desc']);
+  data = data.some((item) => item.addressId)
+    ? _.uniqBy(data, 'addressId')
+    : data.some((item) => item.addressKey)
+    ? _.uniqBy(data, 'addressKey')
+    : data;
+  console.log('Applications after removing duplicates:', data.length);
+
   return data;
 };
 
 export const getParsedVerifierIssues = () => {
   let data;
+
   data = parseVerifierApplicationFromIssues(notaryGovernanceIssues, {
     normalized: true,
   });
+  console.log('Number of verifier issues parsed from raw data before cleaning:', data.length);
+
   data = removeInvalidApplications(data);
-  data = removeDuplicates(data);
+  console.log('Number of valid verifier issues remaining after filtering out invalid entries:', data.length);
+
+  // data = removeDuplicates(data);
 
   return data;
 };
 
+const parsedVerifierApplications = getParsedVerifierIssues();
+console.log('Parsed verifier applications:', parsedVerifierApplications.length);
+
 await writeJSON(
-  "./data/processed/notary-governance-issues.json",
-  getParsedVerifierIssues(),
+  `${PROCESSED_DATA_PATH}/notary-governance-issues.json`,
+  parsedVerifierApplications,
 );

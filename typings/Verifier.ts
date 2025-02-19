@@ -1,50 +1,38 @@
+import { InterplanetaryOneVerifiedClient } from './InterplanetaryOneVerifiedClients.ts';
+
 export interface Verifier {
   /**
-   * The issue number for the application on GitHub.
+   * The issue number of the verifier in the Notary Governance repo
    */
-  issueNumber?: number;
-  addressId?: string;
-  addressKey?: string;
-  name?: string;
-  organization?: string;
-  region?: Region[];
-  /**
-   * The website or social media information.
-   */
-  websiteAndSocial?: string;
-  fromInterplanetaryOne?: FromInterplanetaryOne;
-  verifiedClientsFromInterplanetaryOne?: VerifiedClientsFromInterplanetaryOne[];
+  issueNumber: number;
+  addressId: string | null;
+  addressKey: string | null;
+  name: string | null;
+  organization: string | null;
+  region: Region[] | string | null;
+  websiteAndSocial: string | null;
+  fromInterplanetaryOne: FromInterplanetaryOne;
+  verifiedClientsFromInterplanetaryOne?: InterplanetaryOneVerifiedClient[];
   ttdAverages?: TtdAverages;
   ldnTtdAverages?: TtdAverages;
   id?: string;
   githubUsername?: string;
   githubAvatarUrl?: string;
-  /**
-   * The timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
-   */
-  createdAt?: string;
-  /**
-   * The timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
-   */
-  // startedAt?: string;
+  createdAt?: string | number;
   status?: Status;
   totalApprovals?: number;
-  /**
-   * The timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
-   */
-  // updatedAt?: number;
   hasDatacap?: {
-    total?: string;
-    allocated?: string;
-    available?: string;
-    usedInDeals?: string;
+    total: string | null;
+    allocated: string | null;
+    available: string | null;
+    usedInDeals?: string | null;
   };
   hasStats?: {
     timeToDatacap: TtdAverages;
     ldnTimeToDatacap: TtdAverages;
   };
   clientsCount?: number;
-  roles: Role[];
+  roles?: Role[];
 }
 
 export interface Role {
@@ -63,12 +51,12 @@ export interface FromInterplanetaryOne {
   retries?: number;
   name?: string;
   removed?: boolean;
-  initialAllowance?: bigint;
-  allowance?: bigint;
+  initialAllowance?: string;
+  allowance?: string;
   inffered?: boolean;
   isMultisig?: boolean;
   createdAtHeight?: number;
-  issueCreateTimestamp?: number;
+  issueCreateTimestamp?: number | null;
   createMessageTimestamp?: number;
   verifiedClientsCount?: number;
   receivedDatacapChange?: string;
@@ -76,76 +64,72 @@ export interface FromInterplanetaryOne {
 }
 
 export interface FromInterplanetaryOneAllowanceArray {
-  id?: number;
-  error?: string;
-  height?: number;
-  msgCID?: string;
-  retries?: number;
-  addressId?: string;
-  allowance?: bigint;
-  auditTrail?: string;
-  verifierId?: number;
-  issueCreateTimestamp?: number;
-  createMessageTimestamp?: number;
+  id: number;
+  error: string;
+  height: number;
+  msgCID: string;
+  retries: number;
+  addressId: string;
+  allowance: string;
+  auditTrail: string | null;
+  verifierId: number;
+  issueCreateTimestamp: number | null;
+  createMessageTimestamp: number;
 }
 
 export interface TtdAverages {
-  averageTtd?: string;
-  /**
-   * The average Time To DataCap (TTD) in seconds.
-   */
-  averageTtdRaw?: number;
+  averageTtd: string | null;
+  averageTtdRaw: number | null;
 }
 
 export interface VerifiedClientsFromInterplanetaryOne {
-  id?: number;
-  addressId?: string;
-  address?: string;
-  retries?: number;
-  auditTrail?: string;
-  name?: string;
-  initialAllowance?: bigint;
-  allowance?: bigint;
-  verifierAddressId?: string;
-  createdAtHeight?: number;
-  issueCreateTimestamp?: number;
-  createMessageTimestamp?: number;
-  verifierName?: string;
-  dealCount?: number;
-  providerCount?: number;
-  topProvider?: string;
-  receivedDatacapChange?: string;
-  usedDatacapChange?: string;
-  allowanceArray?: VerifiedClientsFromInterplanetaryOneAllowanceArray[];
+  id: number;
+  addressId: string;
+  address: string;
+  retries: number;
+  auditTrail: string;
+  name: string | null;
+  initialAllowance: string;
+  allowance: string;
+  verifierAddressId: string;
+  createdAtHeight: number;
+  issueCreateTimestamp: number | null;
+  createMessageTimestamp: number;
+  verifierName: string | null;
+  dealCount: number | null;
+  providerCount: number | null;
+  topProvider: string | null;
+  receivedDatacapChange: string;
+  usedDatacapChange: string;
+  allowanceArray: VerifiedClientsFromInterplanetaryOneAllowanceArray[];
 }
 
 export interface VerifiedClientsFromInterplanetaryOneAllowanceArray {
-  id?: number;
-  error?: string;
-  height?: number;
-  msgCID?: string;
-  retries?: number;
-  addressId?: string;
-  allowance?: bigint;
-  auditTrail?: string;
-  allowanceTTD?: null;
-  usedAllowance?: string;
-  isLdnAllowance?: boolean;
-  verifierAddressId?: string;
-  isFromAutoverifier?: boolean;
-  issueCreateTimestamp?: number;
-  hasRemainingAllowance?: boolean;
-  createMessageTimestamp?: number;
+  id: number;
+  error: string;
+  height: number;
+  msgCID: string | null;
+  retries: number;
+  addressId: string;
+  allowance: string;
+  auditTrail: string | null;
+  allowanceTTD: number | null;
+  usedAllowance: string;
+  isLdnAllowance: boolean;
+  verifierAddressId: string;
+  isFromAutoverifier: boolean;
+  issueCreateTimestamp: number | null;
 }
 
 export type Region =
   | 'AFRICA'
   | 'ASIA_NOT_GREATER_CHINA'
   | 'EUROPE'
+  | 'GLOBAL'
   | 'GREATER_CHINA'
   | 'NORTH_AMERICA'
   | 'OCEANIA'
-  | 'SOUTH_AMERICA';
+  | 'OTHER';
 
 export type Status = 'ACTIVE' | 'INACTIVE' | 'REMOVED';
 

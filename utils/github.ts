@@ -1,13 +1,8 @@
-// deno-lint-ignore-file
-import { Octokit } from "octokit";
-import {
-  IssueComment,
-  IssueCommentConnection,
-  IssueConnection,
-  PullRequestConnection,
-} from "graphql-schema";
+import { Octokit } from 'octokit';
+import { IssueComment, IssueCommentConnection, IssueConnection, PullRequestConnection } from 'graphql-schema';
+import { GITHUB_OWNER, NOTARY_GOVERNANCE_REPO } from '../constants.ts';
 
-const GITHUB_API_TOKEN = Deno.env.get("GITHUB_TOKEN");
+const GITHUB_API_TOKEN = Deno.env.get('GITHUB_TOKEN');
 const octokit = new Octokit({ auth: GITHUB_API_TOKEN });
 
 async function loopEdges<A>(
@@ -49,8 +44,8 @@ async function loopEdges<A>(
 }
 
 export type QueryOption = Record<string, string | number | string[]>;
-// @ts-ignore
-export const getAllIssues = async (options: QueryOption = {}) => {
+
+export const getAllIssues = async (options: QueryOption = {}): Promise<IssueComment[]> => {
   const QUERY = `
   query ($owner: String!, $repo: String!, $after: String, $num: Int = 100) {
     repository(owner:$owner, name:$repo) {
@@ -79,15 +74,19 @@ export const getAllIssues = async (options: QueryOption = {}) => {
     }
   }
 `;
-  const response = await octokit.graphql(QUERY, {
-    owner: "filecoin-project",
-    repo: "notary-governance",
-    num: 100,
-    ...options,
-  });
-
-  const issuesConnection = response.repository?.issues;
-
+  let response;
+  try {
+    response = await octokit.graphql<{ repository: { issues: IssueConnection } }>(QUERY, {
+      owner: GITHUB_OWNER,
+      repo: NOTARY_GOVERNANCE_REPO,
+      num: 100,
+      ...options,
+    });
+  } catch (error) {
+    console.error('Error fetching issues from GitHub:', error);
+    throw error;
+  }
+  const issuesConnection = response.repository.issues;
   return await loopEdges<IssueComment>(issuesConnection, {
     onNext: (cursor) => getAllIssues({ ...options, after: cursor }),
   });
@@ -95,7 +94,7 @@ export const getAllIssues = async (options: QueryOption = {}) => {
 
 export async function getIssues() {
   const allIssues = await getAllIssues();
-  console.log("allIssues.length ->", allIssues.length);
+  console.log('allIssues.length ->', allIssues.length);
 
   return allIssues;
 }

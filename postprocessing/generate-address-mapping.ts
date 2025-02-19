@@ -1,133 +1,102 @@
-// deno-lint-ignore-file no-unused-vars no-explicit-any
 import { readJSON, writeJSON } from '../utils/general.ts';
-import PQueue from 'p-queue';
 import { isValidAddress } from '../utils/regexes.ts';
+import { NotaryGovernanceIssue } from '../typings/NotaryGovernanceIssue.ts';
+import { InterplanetaryOneVerifiers, VerifierData } from '../typings/InterplanetaryOneVerifiers.ts';
+import { GENERATED_DATA_PATH, PROCESSED_DATA_PATH, RAW_DATA_PATH } from '../constants.ts';
+import { AddressMap } from '../typings/Address.ts';
+import { resolveAddresses } from './resolve-addresses.ts';
 
-const queue = new PQueue({ concurrency: 4, interval: 500 });
+type AddressIdentifier = string | null | undefined;
 
-type AddressMap = {
-  addressId: string;
-  addressKey: string;
-};
+async function loadData() {
+  try {
+    const issues: NotaryGovernanceIssue[] = await readJSON(
+      `${PROCESSED_DATA_PATH}/notary-governance-issues.json`,
+    );
+    const interplanetaryOne: InterplanetaryOneVerifiers = await readJSON(
+      `${RAW_DATA_PATH}/interplanetaryone-verifiers.json`,
+    );
+    return { issues, interplanetaryOne: interplanetaryOne.data };
+  } catch (error) {
+    console.error('Error reading input JSON files:', error);
+    throw error;
+  }
+}
 
-const addressMap: AddressMap[] = [];
-
-const testAddressMap: AddressMap[] = [
-  { addressId: '', addressKey: '' },
-  { addressId: 'f0107408', addressKey: '' },
-  { addressId: '', addressKey: 'f1k6wwevxvp466ybil7y2scqlhtnrz5atjkkyvm4a' },
-  {
-    addressId: 'f0107408',
-    addressKey: 'f1k6wwevxvp466ybil7y2scqlhtnrz5atjkkyvm4a',
-  },
-];
-
-const notaryGovernanceIssues = await readJSON(
-  './data/processed/notary-governance-issues.json',
-);
-const verifiersFromInterplanetaryOne = await readJSON(
-  './data/raw/interplanetaryone-verifiers.json',
-);
-
-// TODO(alexxnica): change to on-chain checks or modularize to accept different lists
-// Resolves addressId and addressKey from the InterPlanetary One file.
-const getInitialAddresses = (
-  verifiers,
-  verifiersFromInterplanetaryOne,
-) => {
+/**
+ * Initializes address map by attempting to match addressId and addressKey
+ * from different data sources.
+ *
+ * @param verifiers - Verifiers from notary governance issues.
+ * @param verifiersFromInterplanetaryOne - Verifiers from Interplanetary One.
+ * @returns An array of address maps with initial addressId and addressKey.
+ */
+const initializeAddressMap = (
+  verifiers: NotaryGovernanceIssue[],
+  verifiersFromInterplanetaryOne: VerifierData[],
+): AddressMap[] => {
   return verifiers.map((verifier) => {
-    let addressId, addressKey;
+    let addressId: AddressIdentifier = verifier.addressId;
+    let addressKey: AddressIdentifier = verifier.addressKey;
 
-    addressId = verifier.addressId;
-    addressKey = verifier.addressKey;
-
-    if (!addressId && !!addressKey) {
-      addressId = verifiersFromInterplanetaryOne.find((v) => v.address === addressKey)?.addressId;
+    if (!addressId && addressKey) {
+      const found = verifiersFromInterplanetaryOne.find((v) => v.address === addressKey);
+      addressId = found?.addressId;
     }
 
-    if (!addressKey && !!addressId) {
-      addressKey = verifiersFromInterplanetaryOne.find((v) => v.addressId === addressId)?.address;
+    if (!addressKey && addressId) {
+      const found = verifiersFromInterplanetaryOne.find((v) => v.addressId === addressId);
+      addressKey = found?.address;
     }
 
     return {
-      addressId,
-      addressKey,
+      addressId: addressId ?? null,
+      addressKey: addressKey ?? null,
     };
   });
 };
 
-const resolveAddressesWithGlif = async (addressMap: AddressMap[]): Promise<AddressMap[]> => {
-  const newAddressMap: AddressMap[] = [];
-  const apiEndpoint = 'https://api.node.glif.io/rpc/v0';
-
-  addressMap.forEach(async (addresses) => {
-    let addressId, addressKey;
-
-    addressId = addresses.addressId;
-    addressKey = addresses.addressKey;
-
-    if (!addressId && !!addressKey) {
-      const getAddress = await queue.add(async () =>
-        await fetch(`${apiEndpoint}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            method: 'Filecoin.StateLookupID',
-            id: 1,
-            params: [`${addressKey}`, null],
-          }),
-        })
-      );
-      const getAddressData = await getAddress.json();
-      addressId = getAddressData?.result;
+const deduplicateAddresses = (addresses: AddressMap[]): AddressMap[] => {
+  const seen = new Set<string>();
+  const unique: AddressMap[] = [];
+  for (const addr of addresses) {
+    const key = `${addr.addressId}-${addr.addressKey}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(addr);
     }
-
-    if (!addressKey && !!addressId) {
-      const getAddress = await queue.add(async () =>
-        await fetch(`${apiEndpoint}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            method: 'Filecoin.StateAccountKey',
-            id: 1,
-            params: [`${addressId}`, null],
-          }),
-        })
-      );
-      const getAddressData = await getAddress.json();
-      addressKey = getAddressData?.result;
-    }
-
-    newAddressMap.push({ addressId: addressId || null, addressKey: addressKey || null });
-  });
-
-  await queue.onIdle();
-  return newAddressMap;
+  }
+  return unique;
 };
 
-const verifiers = Object.create({});
-verifiers.fromIssues = notaryGovernanceIssues;
-verifiers.fromInterplanetaryOne = verifiersFromInterplanetaryOne.data;
-verifiers.resolvedAddresses = getInitialAddresses(
-  verifiers.fromIssues,
-  verifiers.fromInterplanetaryOne,
-);
-verifiers.resolvedAddresses = await resolveAddressesWithGlif(
-  verifiers.resolvedAddresses,
-);
+async function main() {
+  const { issues, interplanetaryOne } = await loadData();
 
-// Remove invalid addresses
-verifiers.resolvedAddresses = verifiers.resolvedAddresses.filter(({ addressId, addressKey }) =>
-  isValidAddress(addressId) && isValidAddress(addressKey)
-);
+  let resolvedAddresses = initializeAddressMap(issues, interplanetaryOne);
+  console.log('Initial address map length:', resolvedAddresses.length);
 
-verifiers.resolvedAddresses = await writeJSON(
-  './data/generated/address-mapping.json',
-  verifiers.resolvedAddresses,
-);
+  resolvedAddresses = await resolveAddresses(resolvedAddresses);
+  console.log('Number of addresses after resolve:', resolvedAddresses.length);
+
+  // Filter out invalid addresses
+  resolvedAddresses = resolvedAddresses.filter(({ addressId, addressKey }) =>
+    addressId !== null && addressKey !== null && isValidAddress(addressId) && isValidAddress(addressKey)
+  );
+
+  // Remove duplicates and sort by addressId.
+  resolvedAddresses = deduplicateAddresses(resolvedAddresses).sort((a, b) =>
+    a.addressId?.localeCompare(b.addressId ?? '') || 0
+  );
+  console.log('Number of resolved and filtered addresses:', resolvedAddresses.length);
+
+  try {
+    await writeJSON(`${GENERATED_DATA_PATH}/address-mapping.json`, resolvedAddresses);
+    console.log('Address mapping written to file.');
+  } catch (error) {
+    console.error('Error writing address mapping to file:', error);
+  }
+}
+
+main().catch((error) => {
+  console.error('Error processing address mappings:', error);
+});
