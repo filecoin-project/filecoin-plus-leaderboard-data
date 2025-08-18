@@ -18,7 +18,7 @@ jobs:
         with:
           deno-version: v2.x
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
       - name: Fetch data (InterPlanetary One - Verifiers)
         uses: AlexxNica/flat@main
         with:
